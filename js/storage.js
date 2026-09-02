@@ -16,7 +16,10 @@ const Storage = (() => {
 
   /** Perfis padrão criados na primeira execução (primeiro uso do app). */
   const DEFAULT_MACHINE_PROFILES = [
-    { id: "machine-default-1", nome: "Ender 3 V2", potenciaW: 150, valorCompra: 1200, vidaUtilHoras: 8000 },
+    // Consumo médio durante a impressão (~55W) baseado em medições da comunidade;
+    // a potência nominal/máxima da fonte é 150W (usada só em aquecimento).
+    { id: "machine-default-1", nome: "Bambu Lab A1 mini", potenciaW: 55, valorCompra: 2600, vidaUtilHoras: 8000 },
+    { id: "machine-default-2", nome: "Ender 3 V2", potenciaW: 150, valorCompra: 1200, vidaUtilHoras: 8000 },
   ];
 
   const DEFAULT_MATERIAL_PROFILES = [
