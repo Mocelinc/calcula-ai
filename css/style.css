@@ -233,6 +233,194 @@ input:focus, select:focus {
 }
 
 .btn-block { width: 100%; padding: 13px; font-size: 14px; }
+.btn-block-sm { width: 100%; padding: 8px; font-size: 12.5px; margin-top: 2px; }
+
+/* ---------------------------------------------------------------------- */
+/* Linhas de material (multi-filamento por peça)                          */
+/* ---------------------------------------------------------------------- */
+.subheading {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+}
+.hint-top { margin: -4px 0 10px; }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.material-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+
+.material-row {
+  display: grid;
+  grid-template-columns: 1fr 110px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Markup: slider + campo numérico + chips de preset                      */
+/* ---------------------------------------------------------------------- */
+.markup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.markup-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.markup-value-wrap input.markup-number {
+  width: 60px;
+  text-align: right;
+  padding: 4px 6px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.markup-value-wrap span {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  outline: none;
+  margin: 4px 0 12px;
+  cursor: pointer;
+}
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--primary);
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+input[type="range"].slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"].slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+input[type="range"].slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--primary);
+  cursor: pointer;
+}
+
+/* Variante de aviso do slider (ex.: taxa de falha) */
+input[type="range"].slider.slider-warn::-webkit-slider-thumb {
+  background: var(--warning);
+  box-shadow: 0 0 0 1px var(--warning);
+}
+input[type="range"].slider.slider-warn::-moz-range-thumb {
+  background: var(--warning);
+  box-shadow: 0 0 0 1px var(--warning);
+}
+.markup-number.warn { color: var(--warning); }
+
+/* Termômetro de margem: indica se o markup está baixo/moderado/saudável/premium */
+.markup-thermo { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.markup-thermo-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    var(--danger) 0%, var(--danger) 10%,
+    var(--warning) 10%, var(--warning) 26.7%,
+    var(--success) 26.7%, var(--success) 50%,
+    var(--accent) 50%, var(--accent) 100%);
+}
+.markup-thermo-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--text);
+  transform: translate(-50%, -50%);
+  transition: left .1s ease;
+}
+.markup-thermo-label {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+.markup-thermo-label.tier-low { color: var(--danger); }
+.markup-thermo-label.tier-mid { color: var(--warning); }
+.markup-thermo-label.tier-healthy { color: var(--success); }
+.markup-thermo-label.tier-premium { color: var(--accent); }
+
+/* Stepper de quantidade (+/-) */
+.stepper {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.stepper input[type="number"] {
+  border: none;
+  border-radius: 0;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.stepper input[type="number"]::-webkit-outer-spin-button,
+.stepper input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepper-btn {
+  background: var(--surface-alt);
+  border: none;
+  width: 38px;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.stepper-btn:hover { background: var(--primary); color: var(--primary-contrast); }
+.stepper-btn:active { transform: scale(0.96); }
+
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.chip:hover { border-color: var(--primary); color: var(--text); }
+.chip.is-active { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); }
 
 /* ---------------------------------------------------------------------- */
 /* Painel de Resultados                                                    */

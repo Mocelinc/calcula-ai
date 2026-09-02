@@ -10,13 +10,13 @@ const Calculator = (() => {
    * Calcula o orçamento completo de uma peça impressa em 3D.
    *
    * @param {Object} input
-   * @param {number} input.pesoPecaG          Peso da peça em gramas
+   * @param {Array}  input.materiais          Filamentos usados na peça: [{ nome, pesoG, precoKg }, ...]
+   *                                          Suporta multi-material (ex.: 2 cores de PLA com preços diferentes).
    * @param {number} input.tempoHoras         Horas de impressão
    * @param {number} input.tempoMinutos       Minutos de impressão (adicionais)
    * @param {number} input.potenciaW          Consumo médio da impressora em Watts
    * @param {number} input.valorCompraMaquina Valor pago na impressora (R$)
    * @param {number} input.vidaUtilHoras      Vida útil estimada da impressora (horas)
-   * @param {number} input.precoFilamentoKg   Preço do rolo de filamento por KG (R$)
    * @param {number} input.valorKwh           Valor do kWh da energia local (R$)
    * @param {number} input.prepMinutos        Tempo de preparo/pós-processamento (min)
    * @param {number} input.valorHoraTrabalho  Valor da hora de trabalho (R$)
@@ -31,13 +31,12 @@ const Calculator = (() => {
    */
   function calcular(input) {
     const {
-      pesoPecaG = 0,
+      materiais = [],
       tempoHoras = 0,
       tempoMinutos = 0,
       potenciaW = 0,
       valorCompraMaquina = 0,
       vidaUtilHoras = 1, // evita divisão por zero
-      precoFilamentoKg = 0,
       valorKwh = 0,
       prepMinutos = 0,
       valorHoraTrabalho = 0,
@@ -52,8 +51,16 @@ const Calculator = (() => {
     // 1. Tempo total de impressão, em horas decimais.
     const tempoImpressaoH = Math.max(0, tempoHoras) + Math.max(0, tempoMinutos) / 60;
 
-    // 2. Custo de filamento: proporcional ao peso da peça.
-    const custoFilamento = (Math.max(0, pesoPecaG) / 1000) * Math.max(0, precoFilamentoKg);
+    // 2. Custo de filamento: soma de cada material usado na peça
+    //    (peso próprio x preço/kg do respectivo perfil). Suporta peças
+    //    multi-material/multi-cor, cada uma com seu próprio custo por kg.
+    const materiaisDetalhe = materiais.map((m) => {
+      const pesoG = Math.max(0, m.pesoG || 0);
+      const precoKg = Math.max(0, m.precoKg || 0);
+      return { nome: m.nome || "Material", pesoG, precoKg, custo: (pesoG / 1000) * precoKg };
+    });
+    const custoFilamento = materiaisDetalhe.reduce((soma, m) => soma + m.custo, 0);
+    const pesoTotalG = materiaisDetalhe.reduce((soma, m) => soma + m.pesoG, 0);
 
     // 3. Custo de energia: potência (kW) x tempo de impressão x tarifa.
     const custoEnergia = (Math.max(0, potenciaW) / 1000) * tempoImpressaoH * Math.max(0, valorKwh);
@@ -98,6 +105,8 @@ const Calculator = (() => {
 
     return {
       tempoImpressaoH,
+      materiaisDetalhe,
+      pesoTotalG,
       custoFilamento,
       custoEnergia,
       custoDepreciacao,

@@ -30,8 +30,7 @@ const Storage = (() => {
   const DEFAULT_SETTINGS = {
     valorKwh: 4.0,
     valorHora: 20,
-    markup: "100",
-    markupCustom: 100,
+    markup: 100, // markup numérico (%) — controlado pelo slider no card "Margem de Lucro"
   };
 
   function _read(key, fallback) {

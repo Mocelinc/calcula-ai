@@ -46,20 +46,14 @@
       <!-- PEÇA -->
       <fieldset class="card">
         <legend>📦 Peça</legend>
-        <div class="field-row">
-          <div class="field">
-            <label for="pesoPeca">Peso da peça (g)</label>
-            <input type="number" id="pesoPeca" min="0" step="0.1" value="50" tabindex="1" />
-          </div>
-        </div>
         <div class="field-row two-col">
           <div class="field">
             <label for="tempoHoras">Tempo de impressão — horas</label>
-            <input type="number" id="tempoHoras" min="0" step="1" value="3" tabindex="2" />
+            <input type="number" id="tempoHoras" min="0" step="1" value="3" />
           </div>
           <div class="field">
             <label for="tempoMinutos">Minutos</label>
-            <input type="number" id="tempoMinutos" min="0" max="59" step="1" value="30" tabindex="3" />
+            <input type="number" id="tempoMinutos" min="0" max="59" step="1" value="30" />
           </div>
         </div>
       </fieldset>
@@ -70,7 +64,7 @@
         <div class="field-row">
           <div class="field grow">
             <label for="machineProfileSelect">Perfil de máquina</label>
-            <select id="machineProfileSelect" tabindex="4"></select>
+            <select id="machineProfileSelect"></select>
           </div>
           <div class="field-btns">
             <button type="button" id="btnMachineNew" class="btn btn-icon" title="Novo perfil">＋</button>
@@ -81,21 +75,21 @@
         <div class="field-row">
           <div class="field">
             <label for="machineNome">Nome do perfil</label>
-            <input type="text" id="machineNome" tabindex="5" />
+            <input type="text" id="machineNome" />
           </div>
         </div>
         <div class="field-row three-col">
           <div class="field">
             <label for="machinePotencia">Consumo médio (W)</label>
-            <input type="number" id="machinePotencia" min="0" step="1" tabindex="6" />
+            <input type="number" id="machinePotencia" min="0" step="1" />
           </div>
           <div class="field">
             <label for="machineValor">Valor de compra (R$)</label>
-            <input type="number" id="machineValor" min="0" step="0.01" tabindex="7" />
+            <input type="number" id="machineValor" min="0" step="0.01" />
           </div>
           <div class="field">
             <label for="machineVidaUtil">Vida útil (horas)</label>
-            <input type="number" id="machineVidaUtil" min="1" step="1" tabindex="8" />
+            <input type="number" id="machineVidaUtil" min="1" step="1" />
           </div>
         </div>
       </fieldset>
@@ -103,10 +97,20 @@
       <!-- MATERIAL -->
       <fieldset class="card">
         <legend>🧵 Material</legend>
+
+        <p class="subheading">Filamentos usados nesta peça</p>
+        <p class="hint hint-top">Use mais de uma linha para peças multi-material/multi-cor — cada uma pode ter peso e preço/kg diferentes.</p>
+        <div class="material-rows" id="materialRows"><!-- linhas geradas via JS --></div>
+        <button type="button" id="btnAddMaterialRow" class="btn btn-secondary btn-block-sm">＋ Adicionar filamento</button>
+        <p class="hint">Peso total da peça: <strong id="pesoTotalDisplay">0 g</strong></p>
+
+        <hr class="divider" />
+
+        <p class="subheading">Perfis de material salvos</p>
         <div class="field-row">
           <div class="field grow">
-            <label for="materialProfileSelect">Perfil de material</label>
-            <select id="materialProfileSelect" tabindex="9"></select>
+            <label for="materialProfileSelect">Perfil selecionado para edição</label>
+            <select id="materialProfileSelect"></select>
           </div>
           <div class="field-btns">
             <button type="button" id="btnMaterialNew" class="btn btn-icon" title="Novo perfil">＋</button>
@@ -117,11 +121,11 @@
         <div class="field-row two-col">
           <div class="field">
             <label for="materialNome">Nome do perfil</label>
-            <input type="text" id="materialNome" tabindex="10" />
+            <input type="text" id="materialNome" />
           </div>
           <div class="field">
             <label for="materialPrecoKg">Preço do rolo (R$/kg)</label>
-            <input type="number" id="materialPrecoKg" min="0" step="0.01" tabindex="11" />
+            <input type="number" id="materialPrecoKg" min="0" step="0.01" />
           </div>
         </div>
       </fieldset>
@@ -132,7 +136,7 @@
         <div class="field-row">
           <div class="field">
             <label for="valorKwh">Valor do kWh (R$)</label>
-            <input type="number" id="valorKwh" min="0" step="0.01" value="4.00" tabindex="12" />
+            <input type="number" id="valorKwh" min="0" step="0.01" value="4.00" />
           </div>
         </div>
       </fieldset>
@@ -143,25 +147,34 @@
         <div class="field-row two-col">
           <div class="field">
             <label for="prepMinutos">Preparo / pós-processamento (min)</label>
-            <input type="number" id="prepMinutos" min="0" step="1" value="15" tabindex="13" />
+            <input type="number" id="prepMinutos" min="0" step="1" value="15" />
           </div>
           <div class="field">
             <label for="valorHora">Valor da sua hora (R$)</label>
-            <input type="number" id="valorHora" min="0" step="0.01" value="20" tabindex="14" />
+            <input type="number" id="valorHora" min="0" step="0.01" value="20" />
           </div>
         </div>
-        <div class="field-row three-col">
+        <div class="field-row two-col">
           <div class="field">
             <label for="custoEmbalagem">Embalagem (R$)</label>
-            <input type="number" id="custoEmbalagem" min="0" step="0.01" value="3" tabindex="15" />
-          </div>
-          <div class="field">
-            <label for="taxaFalha">Taxa de falha (%)</label>
-            <input type="number" id="taxaFalha" min="0" max="90" step="1" value="5" tabindex="16" />
+            <input type="number" id="custoEmbalagem" min="0" step="0.01" value="3" />
           </div>
           <div class="field">
             <label for="custosExtras">Custos extras (R$)</label>
-            <input type="number" id="custosExtras" min="0" step="0.01" value="0" tabindex="17" />
+            <input type="number" id="custosExtras" min="0" step="0.01" value="0" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <div class="markup-header">
+              <label for="taxaFalhaSlider">Taxa de falha estimada</label>
+              <div class="markup-value-wrap">
+                <input type="number" id="taxaFalhaNumber" min="0" max="90" step="1" value="5" class="markup-number warn" />
+                <span>%</span>
+              </div>
+            </div>
+            <input type="range" id="taxaFalhaSlider" class="slider slider-warn" min="0" max="90" step="1" value="5" />
+            <p class="hint hint-top">% de peças perdidas por falha de impressão — infla o custo pra cobrir o prejuízo.</p>
           </div>
         </div>
       </fieldset>
@@ -169,30 +182,42 @@
       <!-- MARGEM & QUANTIDADE -->
       <fieldset class="card">
         <legend>💰 Margem de Lucro & Quantidade</legend>
-        <div class="field-row two-col">
+        <div class="field-row">
           <div class="field">
-            <label for="markupSelect">Markup (margem de lucro)</label>
-            <select id="markupSelect" tabindex="18">
-              <option value="50">+50%</option>
-              <option value="75">+75%</option>
-              <option value="100" selected>+100%</option>
-              <option value="200">+200%</option>
-              <option value="custom">Personalizado…</option>
-            </select>
-          </div>
-          <div class="field" id="customMarkupWrap" hidden>
-            <label for="markupCustom">Markup customizado (%)</label>
-            <input type="number" id="markupCustom" min="0" step="1" value="100" tabindex="19" />
+            <div class="markup-header">
+              <label for="markupSlider">Markup (margem de lucro)</label>
+              <div class="markup-value-wrap">
+                <input type="number" id="markupNumber" min="0" max="1000" step="1" value="100" class="markup-number" />
+                <span>%</span>
+              </div>
+            </div>
+            <input type="range" id="markupSlider" class="slider" min="0" max="300" step="1" value="100" />
+            <div class="chip-row" id="markupChips">
+              <button type="button" class="chip" data-markup="50">+50%</button>
+              <button type="button" class="chip" data-markup="75">+75%</button>
+              <button type="button" class="chip is-active" data-markup="100">+100%</button>
+              <button type="button" class="chip" data-markup="200">+200%</button>
+            </div>
+            <div class="markup-thermo">
+              <div class="markup-thermo-track">
+                <div class="markup-thermo-marker" id="markupThermoMarker"></div>
+              </div>
+              <span class="markup-thermo-label" id="markupThermoLabel">Saudável</span>
+            </div>
           </div>
         </div>
         <div class="field-row two-col">
           <div class="field">
             <label for="quantidadePecas">Quantidade de peças</label>
-            <input type="number" id="quantidadePecas" min="1" step="1" value="1" tabindex="20" />
+            <div class="stepper">
+              <button type="button" class="stepper-btn" id="btnQtdMinus" aria-label="Diminuir quantidade">−</button>
+              <input type="number" id="quantidadePecas" min="1" step="1" value="1" />
+              <button type="button" class="stepper-btn" id="btnQtdPlus" aria-label="Aumentar quantidade">＋</button>
+            </div>
           </div>
           <div class="field field-inline">
             <label class="checkbox-label" for="precoMarketeiro">
-              <input type="checkbox" id="precoMarketeiro" tabindex="21" />
+              <input type="checkbox" id="precoMarketeiro" />
               <span>🏷️ Preço Marketeiro</span>
             </label>
           </div>
@@ -203,8 +228,8 @@
       <fieldset class="card">
         <legend>🗄️ Backup de Dados</legend>
         <div class="field-row two-col">
-          <button type="button" id="btnExport" class="btn btn-secondary" tabindex="22">⬇️ Exportar Dados</button>
-          <button type="button" id="btnImportTrigger" class="btn btn-secondary" tabindex="23">⬆️ Importar Dados</button>
+          <button type="button" id="btnExport" class="btn btn-secondary">⬇️ Exportar Dados</button>
+          <button type="button" id="btnImportTrigger" class="btn btn-secondary">⬆️ Importar Dados</button>
           <input type="file" id="btnImportFile" accept="application/json" hidden />
         </div>
         <p class="hint">Gera/lê um arquivo <code>.json</code> com todos os seus perfis e configurações salvos no navegador.</p>

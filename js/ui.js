@@ -23,15 +23,22 @@ const UI = (() => {
 
   function cacheElements() {
     [
-      "pesoPeca", "tempoHoras", "tempoMinutos",
+      "tempoHoras", "tempoMinutos",
       "machineProfileSelect", "machineNome", "machinePotencia", "machineValor", "machineVidaUtil",
+      "materialRows", "pesoTotalDisplay",
       "materialProfileSelect", "materialNome", "materialPrecoKg",
-      "valorKwh", "prepMinutos", "valorHora", "custoEmbalagem", "taxaFalha", "custosExtras",
-      "markupSelect", "customMarkupWrap", "markupCustom",
+      "valorKwh", "prepMinutos", "valorHora", "custoEmbalagem", "custosExtras",
+      "taxaFalhaSlider", "taxaFalhaNumber",
+      "markupSlider", "markupNumber", "markupChips", "markupThermoMarker", "markupThermoLabel",
       "quantidadePecas", "precoMarketeiro", "pieceName",
       "outPrecoUnitario", "outPrecoMarketeiro", "outCustoTotal", "outLucroUnitario",
       "outQtdLabel", "outTotalQtd", "outLucroTotal", "breakdownList", "copyFeedback",
     ].forEach((id) => { el[id] = $(id); });
+  }
+
+  function formatGramas(g) {
+    const n = Number.isFinite(g) ? g : 0;
+    return `${(Math.round(n * 10) / 10).toString().replace(".", ",")} g`;
   }
 
   // ------------------------------------------------------ Perfis: Máquina
@@ -70,6 +77,82 @@ const UI = (() => {
 
   function currentMaterialProfile() {
     return materialProfiles.find((p) => p.id === el.materialProfileSelect.value) || materialProfiles[0];
+  }
+
+  // ---------------------------------------------- Filamentos usados na peça
+  // Suporta multi-material: cada linha é um filamento com peso e perfil
+  // (preço/kg) próprios — ex.: 2 cores de PLA com preços diferentes.
+
+  let materialRowSeq = 0;
+
+  function materialRowOptionsHtml(selectedId) {
+    return materialProfiles.map((p) => `<option value="${p.id}"${p.id === selectedId ? " selected" : ""}>${escapeHtml(p.nome)}</option>`).join("");
+  }
+
+  function addMaterialRow(profileId, pesoG) {
+    const rowId = `mrow-${++materialRowSeq}`;
+    const row = document.createElement("div");
+    row.className = "material-row";
+    row.dataset.rowId = rowId;
+    row.innerHTML = `
+      <select class="material-row-select" aria-label="Perfil de material desta linha">${materialRowOptionsHtml(profileId)}</select>
+      <input type="number" class="material-row-peso" min="0" step="0.1" value="${pesoG}" aria-label="Peso deste filamento (g)" />
+      <button type="button" class="btn btn-icon btn-danger material-row-remove" title="Remover filamento">🗑️</button>
+    `;
+    el.materialRows.appendChild(row);
+  }
+
+  function resetMaterialRows() {
+    el.materialRows.innerHTML = "";
+    const firstId = materialProfiles[0] ? materialProfiles[0].id : "";
+    addMaterialRow(firstId, 50);
+  }
+
+  /** Reconstrói as <option> de todas as linhas quando o catálogo de perfis muda. */
+  function refreshMaterialRowSelects() {
+    el.materialRows.querySelectorAll(".material-row-select").forEach((select) => {
+      const prev = select.value;
+      const stillExists = materialProfiles.some((p) => p.id === prev);
+      const fallbackId = materialProfiles[0] ? materialProfiles[0].id : "";
+      select.innerHTML = materialRowOptionsHtml(stillExists ? prev : fallbackId);
+    });
+  }
+
+  function readMaterialRows() {
+    return Array.from(el.materialRows.querySelectorAll(".material-row")).map((rowEl) => {
+      const select = rowEl.querySelector(".material-row-select");
+      const pesoInput = rowEl.querySelector(".material-row-peso");
+      const profile = materialProfiles.find((p) => p.id === select.value);
+      const pesoG = parseFloat(pesoInput.value);
+      return {
+        nome: profile ? profile.nome : "Material",
+        precoKg: profile ? profile.precoKg : 0,
+        pesoG: Number.isFinite(pesoG) ? pesoG : 0,
+      };
+    });
+  }
+
+  function bindMaterialRows() {
+    $("btnAddMaterialRow").addEventListener("click", () => {
+      const firstId = materialProfiles[0] ? materialProfiles[0].id : "";
+      addMaterialRow(firstId, 50);
+      recalculate();
+    });
+
+    // Remoção via delegação (as linhas são criadas dinamicamente).
+    el.materialRows.addEventListener("click", (e) => {
+      const btn = e.target.closest(".material-row-remove");
+      if (!btn) return;
+      if (el.materialRows.querySelectorAll(".material-row").length <= 1) {
+        alert("A peça precisa ter ao menos um filamento.");
+        return;
+      }
+      btn.closest(".material-row").remove();
+      recalculate();
+    });
+
+    // Alterações de select/peso dentro das linhas já disparam recalculate()
+    // via bindLiveRecalculation(), pois as linhas vivem dentro de #calcForm.
   }
 
   // ------------------------------------------------------------- Genérico
@@ -151,6 +234,7 @@ const UI = (() => {
       renderProfileSelect(el.materialProfileSelect, materialProfiles);
       el.materialProfileSelect.value = novo.id;
       fillMaterialFields(novo);
+      refreshMaterialRowSelects();
       el.materialNome.focus();
       recalculate();
     });
@@ -163,6 +247,7 @@ const UI = (() => {
       Storage.saveMaterialProfiles(materialProfiles);
       renderProfileSelect(el.materialProfileSelect, materialProfiles);
       el.materialProfileSelect.value = profile.id;
+      refreshMaterialRowSelects();
       flashFeedback("Perfil de material salvo.");
       recalculate();
     });
@@ -178,41 +263,112 @@ const UI = (() => {
       Storage.saveMaterialProfiles(materialProfiles);
       renderProfileSelect(el.materialProfileSelect, materialProfiles);
       fillMaterialFields(materialProfiles[0]);
+      refreshMaterialRowSelects();
       recalculate();
     });
   }
 
   // ------------------------------------------------------------- Markup UI
+  // Slider + campo numérico ficam sincronizados nos dois sentidos, e os
+  // chips de preset (+50/+75/+100/+200%) pulam direto para o valor.
 
-  function bindMarkupToggle() {
-    el.markupSelect.addEventListener("change", () => {
-      el.customMarkupWrap.hidden = el.markupSelect.value !== "custom";
+  /** @param {"slider"|"number"|"chip"|"init"} source Quem originou a mudança, pra não sobrescrever o próprio controle. */
+  function syncMarkupUI(value, source) {
+    const v = Math.max(0, Number.isFinite(value) ? value : 0);
+    if (source !== "slider") el.markupSlider.value = Math.min(v, parseFloat(el.markupSlider.max));
+    if (source !== "number") el.markupNumber.value = v;
+    el.markupChips.querySelectorAll(".chip").forEach((chip) => {
+      chip.classList.toggle("is-active", parseFloat(chip.dataset.markup) === v);
+    });
+    updateMarkupThermo(v);
+  }
+
+  /** Termômetro visual: indica se a margem está baixa/moderada/saudável/premium. */
+  function updateMarkupThermo(v) {
+    const max = parseFloat(el.markupSlider.max);
+    const pct = Math.max(0, Math.min(100, (v / max) * 100));
+    el.markupThermoMarker.style.left = `${pct}%`;
+
+    let tier, label;
+    if (v < 30) { tier = "tier-low"; label = "Baixa"; }
+    else if (v < 80) { tier = "tier-mid"; label = "Moderada"; }
+    else if (v < 150) { tier = "tier-healthy"; label = "Saudável"; }
+    else { tier = "tier-premium"; label = "Premium"; }
+    el.markupThermoLabel.textContent = label;
+    el.markupThermoLabel.className = `markup-thermo-label ${tier}`;
+  }
+
+  function bindMarkupControls() {
+    el.markupSlider.addEventListener("input", () => {
+      syncMarkupUI(parseFloat(el.markupSlider.value), "slider");
+      recalculate();
+    });
+    el.markupNumber.addEventListener("input", () => {
+      syncMarkupUI(parseFloat(el.markupNumber.value), "number");
+      recalculate();
+    });
+    el.markupChips.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      syncMarkupUI(parseFloat(chip.dataset.markup), "chip");
       recalculate();
     });
   }
 
   function currentMarkupPct() {
-    return el.markupSelect.value === "custom" ? numVal("markupCustom") : parseFloat(el.markupSelect.value);
+    return numVal("markupNumber");
+  }
+
+  // -------------------------------------------------------- Taxa de falha
+
+  /** @param {"slider"|"number"|"init"} source */
+  function syncTaxaFalhaUI(value, source) {
+    const max = parseFloat(el.taxaFalhaSlider.max);
+    const v = Math.max(0, Math.min(max, Number.isFinite(value) ? value : 0));
+    if (source !== "slider") el.taxaFalhaSlider.value = v;
+    if (source !== "number") el.taxaFalhaNumber.value = v;
+  }
+
+  function bindTaxaFalhaControls() {
+    el.taxaFalhaSlider.addEventListener("input", () => {
+      syncTaxaFalhaUI(parseFloat(el.taxaFalhaSlider.value), "slider");
+      recalculate();
+    });
+    el.taxaFalhaNumber.addEventListener("input", () => {
+      syncTaxaFalhaUI(parseFloat(el.taxaFalhaNumber.value), "number");
+      recalculate();
+    });
+  }
+
+  // ------------------------------------------------------ Stepper de qtd.
+
+  function bindQuantityStepper() {
+    $("btnQtdMinus").addEventListener("click", () => {
+      el.quantidadePecas.value = Math.max(1, numVal("quantidadePecas") - 1);
+      recalculate();
+    });
+    $("btnQtdPlus").addEventListener("click", () => {
+      el.quantidadePecas.value = Math.max(1, numVal("quantidadePecas") + 1);
+      recalculate();
+    });
   }
 
   // --------------------------------------------------------- Cálculo (core)
 
   function gatherInput() {
     const machine = currentMachineProfile() || {};
-    const material = currentMaterialProfile() || {};
     return {
-      pesoPecaG: numVal("pesoPeca"),
+      materiais: readMaterialRows(),
       tempoHoras: numVal("tempoHoras"),
       tempoMinutos: numVal("tempoMinutos"),
       potenciaW: machine.potenciaW || 0,
       valorCompraMaquina: machine.valorCompra || 0,
       vidaUtilHoras: machine.vidaUtilHoras || 1,
-      precoFilamentoKg: material.precoKg || 0,
       valorKwh: numVal("valorKwh"),
       prepMinutos: numVal("prepMinutos"),
       valorHoraTrabalho: numVal("valorHora"),
       custoEmbalagem: numVal("custoEmbalagem"),
-      taxaFalhaPct: numVal("taxaFalha"),
+      taxaFalhaPct: numVal("taxaFalhaNumber"),
       custosExtras: numVal("custosExtras"),
       markupPct: currentMarkupPct(),
       quantidade: numVal("quantidadePecas"),
@@ -236,6 +392,7 @@ const UI = (() => {
       el.outPrecoMarketeiro.hidden = true;
     }
 
+    el.pesoTotalDisplay.textContent = formatGramas(r.pesoTotalG);
     el.outCustoTotal.textContent = Calculator.formatarMoeda(r.custoAjustado);
     el.outLucroUnitario.textContent = Calculator.formatarMoeda(r.lucroUnitario);
     el.outQtdLabel.textContent = r.quantidade;
@@ -249,21 +406,24 @@ const UI = (() => {
     Storage.saveSettings({
       valorKwh: input.valorKwh,
       valorHora: input.valorHoraTrabalho,
-      markup: el.markupSelect.value,
-      markupCustom: numVal("markupCustom"),
+      markup: input.markupPct,
     });
   }
 
   function renderBreakdown(r) {
+    // Uma linha por filamento usado na peça (multi-material/multi-cor).
+    let html = r.materiaisDetalhe.map((m) => `
+      <li><span class="label">Filamento — ${escapeHtml(m.nome)} (${formatGramas(m.pesoG)})</span><span class="value">${Calculator.formatarMoeda(m.custo)}</span></li>
+    `).join("");
+
     const rows = [
-      ["Filamento", r.custoFilamento],
       ["Energia", r.custoEnergia],
       ["Depreciação da máquina", r.custoDepreciacao],
       ["Mão de obra", r.custoMaoDeObra],
       ["Embalagem", r.custoEmbalagem],
       ["Custos extras", r.custosExtras],
     ];
-    let html = rows.map(([label, value]) => `
+    html += rows.map(([label, value]) => `
       <li><span class="label">${label}</span><span class="value">${Calculator.formatarMoeda(value)}</span></li>
     `).join("");
 
@@ -321,10 +481,13 @@ const UI = (() => {
 
   function buildBudgetText(r) {
     const nome = el.pieceName.value.trim() || "Peça 3D";
-    const material = currentMaterialProfile();
+    const materiaisLinha = r.materiaisDetalhe
+      .filter((m) => m.pesoG > 0)
+      .map((m) => `${m.nome} (${formatGramas(m.pesoG)})`)
+      .join(", ");
     const linhas = [
       `🧾 Orçamento — ${nome}`,
-      `Material: ${material ? material.nome : "-"}`,
+      `Material: ${materiaisLinha || "-"}`,
       `Quantidade: ${r.quantidade}`,
       `Valor unitário: ${Calculator.formatarMoeda(r.precoFinal)}`,
     ];
@@ -348,8 +511,20 @@ const UI = (() => {
       if (!confirm("Limpar todos os campos do orçamento atual? Perfis salvos não serão apagados.")) return;
       $("calcForm").reset();
       el.pieceName.value = "";
-      el.customMarkupWrap.hidden = el.markupSelect.value !== "custom";
+      syncMarkupUI(100, "init");
+      syncTaxaFalhaUI(5, "init");
+      resetMaterialRows();
       recalculate();
+    });
+  }
+
+  /** Atalhos de teclado do workflow: Alt+R = Novo Orçamento. */
+  function bindKeyboardShortcuts() {
+    document.addEventListener("keydown", (e) => {
+      if (e.altKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        $("btnReset").click();
+      }
     });
   }
 
@@ -365,21 +540,30 @@ const UI = (() => {
     const s = Storage.getSettings();
     el.valorKwh.value = s.valorKwh;
     el.valorHora.value = s.valorHora;
-    el.markupSelect.value = s.markup;
-    el.markupCustom.value = s.markupCustom;
-    el.customMarkupWrap.hidden = s.markup !== "custom";
+
+    // Migração: versões antigas guardavam markup como "50"/"100"/"custom"
+    // + markupCustom separado. Aceita ambos os formatos com segurança.
+    let markupVal = parseFloat(s.markup);
+    if (!Number.isFinite(markupVal)) markupVal = parseFloat(s.markupCustom);
+    if (!Number.isFinite(markupVal)) markupVal = 100;
+    syncMarkupUI(markupVal, "init");
   }
 
   function init() {
     cacheElements();
     loadMachineProfiles();
     loadMaterialProfiles();
+    resetMaterialRows();
     applySavedSettings();
     bindProfileCrud();
-    bindMarkupToggle();
+    bindMaterialRows();
+    bindMarkupControls();
+    bindTaxaFalhaControls();
+    bindQuantityStepper();
     bindBackup();
     bindCopyBudget();
     bindReset();
+    bindKeyboardShortcuts();
     bindLiveRecalculation();
 
     document.addEventListener("calculaai:themechange", () => CostChart.refreshColors());
