@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark-dracula">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calcula.AI — Calculadora de Custos de Impressão 3D</title>
+<meta name="description" content="Calcula.AI: calculadora profissional de custos e precificação de impressão 3D, 100% local, sem back-end." />
+
+<!-- Chart.js via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+
+<link rel="stylesheet" href="css/themes.css" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ======================= HEADER ======================= -->
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-mark">◆</span>
+    <h1>Calcula<span class="brand-accent">.AI</span></h1>
+  </div>
+
+  <div class="header-actions">
+    <label class="theme-select-wrap">
+      <span class="visually-hidden">Tema</span>
+      <select id="themeSelect" title="Selecionar tema">
+        <option value="dark-dracula">🌙 Dark · Dracula</option>
+        <option value="dark-nord">🌙 Dark · Nord</option>
+        <option value="light-minimal">☀️ Light · Minimalista</option>
+        <option value="light-ocean">☀️ Light · Ocean</option>
+      </select>
+    </label>
+    <button id="btnReset" class="btn btn-ghost" title="Limpar orçamento atual (Alt+R)">↺ Novo Orçamento</button>
+  </div>
+</header>
+
+<!-- ======================= MAIN DASHBOARD ======================= -->
+<main class="dashboard">
+
+  <!-- ---------- LEFT: PAINEL DE CONTROLE ---------- -->
+  <section class="panel panel-controls" aria-label="Painel de controle">
+
+    <form id="calcForm" autocomplete="off">
+
+      <!-- PEÇA -->
+      <fieldset class="card">
+        <legend>📦 Peça</legend>
+        <div class="field-row">
+          <div class="field">
+            <label for="pesoPeca">Peso da peça (g)</label>
+            <input type="number" id="pesoPeca" min="0" step="0.1" value="50" tabindex="1" />
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div class="field">
+            <label for="tempoHoras">Tempo de impressão — horas</label>
+            <input type="number" id="tempoHoras" min="0" step="1" value="3" tabindex="2" />
+          </div>
+          <div class="field">
+            <label for="tempoMinutos">Minutos</label>
+            <input type="number" id="tempoMinutos" min="0" max="59" step="1" value="30" tabindex="3" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- MÁQUINA -->
+      <fieldset class="card">
+        <legend>🖨️ Máquina</legend>
+        <div class="field-row">
+          <div class="field grow">
+            <label for="machineProfileSelect">Perfil de máquina</label>
+            <select id="machineProfileSelect" tabindex="4"></select>
+          </div>
+          <div class="field-btns">
+            <button type="button" id="btnMachineNew" class="btn btn-icon" title="Novo perfil">＋</button>
+            <button type="button" id="btnMachineSave" class="btn btn-icon" title="Salvar alterações no perfil">💾</button>
+            <button type="button" id="btnMachineDelete" class="btn btn-icon btn-danger" title="Excluir perfil">🗑️</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="machineNome">Nome do perfil</label>
+            <input type="text" id="machineNome" tabindex="5" />
+          </div>
+        </div>
+        <div class="field-row three-col">
+          <div class="field">
+            <label for="machinePotencia">Consumo médio (W)</label>
+            <input type="number" id="machinePotencia" min="0" step="1" tabindex="6" />
+          </div>
+          <div class="field">
+            <label for="machineValor">Valor de compra (R$)</label>
+            <input type="number" id="machineValor" min="0" step="0.01" tabindex="7" />
+          </div>
+          <div class="field">
+            <label for="machineVidaUtil">Vida útil (horas)</label>
+            <input type="number" id="machineVidaUtil" min="1" step="1" tabindex="8" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- MATERIAL -->
+      <fieldset class="card">
+        <legend>🧵 Material</legend>
+        <div class="field-row">
+          <div class="field grow">
+            <label for="materialProfileSelect">Perfil de material</label>
+            <select id="materialProfileSelect" tabindex="9"></select>
+          </div>
+          <div class="field-btns">
+            <button type="button" id="btnMaterialNew" class="btn btn-icon" title="Novo perfil">＋</button>
+            <button type="button" id="btnMaterialSave" class="btn btn-icon" title="Salvar alterações no perfil">💾</button>
+            <button type="button" id="btnMaterialDelete" class="btn btn-icon btn-danger" title="Excluir perfil">🗑️</button>
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div class="field">
+            <label for="materialNome">Nome do perfil</label>
+            <input type="text" id="materialNome" tabindex="10" />
+          </div>
+          <div class="field">
+            <label for="materialPrecoKg">Preço do rolo (R$/kg)</label>
+            <input type="number" id="materialPrecoKg" min="0" step="0.01" tabindex="11" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- ENERGIA -->
+      <fieldset class="card">
+        <legend>⚡ Energia</legend>
+        <div class="field-row">
+          <div class="field">
+            <label for="valorKwh">Valor do kWh (R$)</label>
+            <input type="number" id="valorKwh" min="0" step="0.01" value="4.00" tabindex="12" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- MÃO DE OBRA E EXTRAS -->
+      <fieldset class="card">
+        <legend>🛠️ Mão de Obra & Extras</legend>
+        <div class="field-row two-col">
+          <div class="field">
+            <label for="prepMinutos">Preparo / pós-processamento (min)</label>
+            <input type="number" id="prepMinutos" min="0" step="1" value="15" tabindex="13" />
+          </div>
+          <div class="field">
+            <label for="valorHora">Valor da sua hora (R$)</label>
+            <input type="number" id="valorHora" min="0" step="0.01" value="20" tabindex="14" />
+          </div>
+        </div>
+        <div class="field-row three-col">
+          <div class="field">
+            <label for="custoEmbalagem">Embalagem (R$)</label>
+            <input type="number" id="custoEmbalagem" min="0" step="0.01" value="3" tabindex="15" />
+          </div>
+          <div class="field">
+            <label for="taxaFalha">Taxa de falha (%)</label>
+            <input type="number" id="taxaFalha" min="0" max="90" step="1" value="5" tabindex="16" />
+          </div>
+          <div class="field">
+            <label for="custosExtras">Custos extras (R$)</label>
+            <input type="number" id="custosExtras" min="0" step="0.01" value="0" tabindex="17" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- MARGEM & QUANTIDADE -->
+      <fieldset class="card">
+        <legend>💰 Margem de Lucro & Quantidade</legend>
+        <div class="field-row two-col">
+          <div class="field">
+            <label for="markupSelect">Markup (margem de lucro)</label>
+            <select id="markupSelect" tabindex="18">
+              <option value="50">+50%</option>
+              <option value="75">+75%</option>
+              <option value="100" selected>+100%</option>
+              <option value="200">+200%</option>
+              <option value="custom">Personalizado…</option>
+            </select>
+          </div>
+          <div class="field" id="customMarkupWrap" hidden>
+            <label for="markupCustom">Markup customizado (%)</label>
+            <input type="number" id="markupCustom" min="0" step="1" value="100" tabindex="19" />
+          </div>
+        </div>
+        <div class="field-row two-col">
+          <div class="field">
+            <label for="quantidadePecas">Quantidade de peças</label>
+            <input type="number" id="quantidadePecas" min="1" step="1" value="1" tabindex="20" />
+          </div>
+          <div class="field field-inline">
+            <label class="checkbox-label" for="precoMarketeiro">
+              <input type="checkbox" id="precoMarketeiro" tabindex="21" />
+              <span>🏷️ Preço Marketeiro</span>
+            </label>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- BACKUP -->
+      <fieldset class="card">
+        <legend>🗄️ Backup de Dados</legend>
+        <div class="field-row two-col">
+          <button type="button" id="btnExport" class="btn btn-secondary" tabindex="22">⬇️ Exportar Dados</button>
+          <button type="button" id="btnImportTrigger" class="btn btn-secondary" tabindex="23">⬆️ Importar Dados</button>
+          <input type="file" id="btnImportFile" accept="application/json" hidden />
+        </div>
+        <p class="hint">Gera/lê um arquivo <code>.json</code> com todos os seus perfis e configurações salvos no navegador.</p>
+      </fieldset>
+
+    </form>
+  </section>
+
+  <!-- ---------- RIGHT: RESULTADOS ---------- -->
+  <section class="panel panel-results" aria-label="Resultados em tempo real">
+
+    <div class="card result-summary">
+      <div class="result-piece-name">
+        <label for="pieceName" class="visually-hidden">Nome da peça</label>
+        <input type="text" id="pieceName" placeholder="Nome da peça (ex: Vaso Geométrico)" />
+      </div>
+
+      <div class="price-hero">
+        <span class="price-hero-label">Preço sugerido (unidade)</span>
+        <span class="price-hero-value" id="outPrecoUnitario">R$ 0,00</span>
+        <span class="price-hero-market" id="outPrecoMarketeiro" hidden></span>
+      </div>
+
+      <div class="price-secondary-grid">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Custo total (c/ falha)</span>
+          <span class="mini-stat-value" id="outCustoTotal">R$ 0,00</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">Lucro (unidade)</span>
+          <span class="mini-stat-value success" id="outLucroUnitario">R$ 0,00</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">Total p/ <span id="outQtdLabel">1</span> peça(s)</span>
+          <span class="mini-stat-value" id="outTotalQtd">R$ 0,00</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">Lucro total</span>
+          <span class="mini-stat-value success" id="outLucroTotal">R$ 0,00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <h2>Composição do Custo</h2>
+      <div class="chart-wrap">
+        <canvas id="costChart" role="img" aria-label="Gráfico de rosca com a composição do custo"></canvas>
+      </div>
+      <ul class="chart-legend" id="chartLegend"></ul>
+    </div>
+
+    <div class="card breakdown-card">
+      <h2>Detalhamento</h2>
+      <ul class="breakdown-list" id="breakdownList">
+        <!-- preenchido via JS -->
+      </ul>
+    </div>
+
+    <div class="card actions-card">
+      <button type="button" id="btnCopyBudget" class="btn btn-primary btn-block">
+        📋 Copiar Orçamento
+      </button>
+      <p class="hint" id="copyFeedback" aria-live="polite"></p>
+    </div>
+
+  </section>
+</main>
+
+<footer class="app-footer">
+  <span>Calcula.AI — 100% local, seus dados nunca saem do navegador.</span>
+</footer>
+
+<script src="js/storage.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script src="js/calculator.js" defer></script>
+<script src="js/chart.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/main.js" defer></script>
+</body>
+</html>

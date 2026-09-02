@@ -1,0 +1,12 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Backups locais gerados pelo próprio app (não versionar dados do usuário)
+calcula-ai-backup-*.json

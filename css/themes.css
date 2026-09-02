@@ -1,0 +1,95 @@
+/* =========================================================================
+   Calcula.AI — Temas
+   Cada tema define o mesmo conjunto de variáveis CSS (design tokens).
+   A troca de tema é feita via atributo [data-theme] na <html>,
+   controlada por js/theme.js.
+   ========================================================================= */
+
+/* ---------- Tema 1: Dark · Dracula ---------- */
+html[data-theme="dark-dracula"] {
+  --bg: #282a36;
+  --bg-alt: #1e1f29;
+  --surface: #343746;
+  --surface-alt: #3d4155;
+  --border: #44475a;
+  --text: #f8f8f2;
+  --text-muted: #9aa0c3;
+  --primary: #bd93f9;
+  --primary-hover: #caa9fa;
+  --primary-contrast: #1a1a1a;
+  --accent: #ff79c6;
+  --success: #50fa7b;
+  --warning: #f1fa8c;
+  --danger: #ff5555;
+  --info: #8be9fd;
+  --shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* ---------- Tema 2: Dark · Nord ---------- */
+html[data-theme="dark-nord"] {
+  --bg: #2e3440;
+  --bg-alt: #242933;
+  --surface: #3b4252;
+  --surface-alt: #434c5e;
+  --border: #4c566a;
+  --text: #eceff4;
+  --text-muted: #9fb0c9;
+  --primary: #88c0d0;
+  --primary-hover: #8fbcbb;
+  --primary-contrast: #1a1a1a;
+  --accent: #b48ead;
+  --success: #a3be8c;
+  --warning: #ebcb8b;
+  --danger: #bf616a;
+  --info: #81a1c1;
+  --shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* ---------- Tema 3: Light · Minimalista ---------- */
+html[data-theme="light-minimal"] {
+  --bg: #fafafa;
+  --bg-alt: #f0f0f0;
+  --surface: #ffffff;
+  --surface-alt: #f5f5f7;
+  --border: #e2e2e5;
+  --text: #17181a;
+  --text-muted: #6b6b70;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-contrast: #ffffff;
+  --accent: #7c3aed;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #0891b2;
+  --shadow: 0 4px 16px rgba(20,20,30,0.08);
+}
+
+/* ---------- Tema 4: Light · Ocean ---------- */
+html[data-theme="light-ocean"] {
+  --bg: #f0f7fa;
+  --bg-alt: #e1eef5;
+  --surface: #ffffff;
+  --surface-alt: #eaf4f9;
+  --border: #cfe3ee;
+  --text: #0b2635;
+  --text-muted: #4f7788;
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-contrast: #ffffff;
+  --accent: #06b6d4;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #e11d48;
+  --info: #0891b2;
+  --shadow: 0 4px 16px rgba(2,60,90,0.08);
+}
+
+/* ---------- Cores fixas do gráfico (consistentes entre temas) ---------- */
+:root {
+  --chart-filamento: var(--primary);
+  --chart-energia: var(--warning);
+  --chart-depreciacao: var(--info);
+  --chart-operacional: var(--accent);
+  --chart-lucro: var(--success);
+}
