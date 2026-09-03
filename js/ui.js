@@ -24,7 +24,8 @@ const UI = (() => {
   function cacheElements() {
     [
       "tempoHoras", "tempoMinutos",
-      "machineProfileSelect", "machineNome", "machinePotencia", "machineValor", "machineVidaUtil",
+      "machineProfileSelect", "machineProfileEditSelect",
+      "machineNome", "machinePotencia", "machineValor", "machineVidaUtil",
       "materialRows", "pesoTotalDisplay",
       "materialProfileSelect", "materialNome", "materialPrecoKg",
       "valorKwh", "prepMinutos", "valorHora", "custoEmbalagem", "custosExtras",
@@ -32,7 +33,8 @@ const UI = (() => {
       "markupSlider", "markupNumber", "markupChips", "markupThermoMarker", "markupThermoLabel",
       "quantidadePecas", "precoMarketeiro", "pieceName",
       "outPrecoUnitario", "outPrecoMarketeiro", "outCustoTotal", "outLucroUnitario",
-      "outQtdLabel", "outTotalQtd", "outLucroTotal", "breakdownList", "copyFeedback",
+      "outTempoTotal", "outPesoTotalStat", "ratioBarFill", "ratioBarLabel", "insightCallout",
+      "outQtdLabel", "outTotalQtd", "breakdownList", "copyFeedback",
     ].forEach((id) => { el[id] = $(id); });
   }
 
@@ -43,10 +45,15 @@ const UI = (() => {
 
   // ------------------------------------------------------ Perfis: Máquina
 
+  // machineProfileSelect (painel principal) escolhe qual máquina é usada
+  // NESTA peça; machineProfileEditSelect (Configurações fixas) escolhe qual
+  // perfil está sendo editado no formulário de CRUD — são independentes.
+
   function loadMachineProfiles() {
     machineProfiles = Storage.getMachineProfiles();
     renderProfileSelect(el.machineProfileSelect, machineProfiles);
-    fillMachineFields(machineProfiles[0]);
+    renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
+    fillMachineFields(currentMachineEditProfile());
   }
 
   function fillMachineFields(profile) {
@@ -59,6 +66,10 @@ const UI = (() => {
 
   function currentMachineProfile() {
     return machineProfiles.find((p) => p.id === el.machineProfileSelect.value) || machineProfiles[0];
+  }
+
+  function currentMachineEditProfile() {
+    return machineProfiles.find((p) => p.id === el.machineProfileEditSelect.value) || machineProfiles[0];
   }
 
   // ------------------------------------------------------ Perfis: Material
@@ -105,7 +116,7 @@ const UI = (() => {
   function resetMaterialRows() {
     el.materialRows.innerHTML = "";
     const firstId = materialProfiles[0] ? materialProfiles[0].id : "";
-    addMaterialRow(firstId, 50);
+    addMaterialRow(firstId, 0);
   }
 
   /** Reconstrói as <option> de todas as linhas quando o catálogo de perfis muda. */
@@ -135,7 +146,7 @@ const UI = (() => {
   function bindMaterialRows() {
     $("btnAddMaterialRow").addEventListener("click", () => {
       const firstId = materialProfiles[0] ? materialProfiles[0].id : "";
-      addMaterialRow(firstId, 50);
+      addMaterialRow(firstId, 0);
       recalculate();
     });
 
@@ -171,9 +182,12 @@ const UI = (() => {
 
   function bindProfileCrud() {
     // --- Máquina ---
-    el.machineProfileSelect.addEventListener("change", () => {
-      fillMachineFields(currentMachineProfile());
-      recalculate();
+    // Select principal: só escolhe qual perfil vale para a peça atual.
+    el.machineProfileSelect.addEventListener("change", recalculate);
+
+    // Select de edição (dentro de "Configurações fixas"): carrega os campos do CRUD.
+    el.machineProfileEditSelect.addEventListener("change", () => {
+      fillMachineFields(currentMachineEditProfile());
     });
 
     $("btnMachineNew").addEventListener("click", () => {
@@ -182,27 +196,29 @@ const UI = (() => {
         nome: "Nova Máquina",
         potenciaW: 150,
         valorCompra: 1000,
-        vidaUtilHoras: 5000,
+        vidaUtilHoras: 0,
       };
       machineProfiles.push(novo);
       Storage.saveMachineProfiles(machineProfiles);
       renderProfileSelect(el.machineProfileSelect, machineProfiles);
-      el.machineProfileSelect.value = novo.id;
+      renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
+      el.machineProfileEditSelect.value = novo.id;
       fillMachineFields(novo);
       el.machineNome.focus();
       recalculate();
     });
 
     $("btnMachineSave").addEventListener("click", () => {
-      const profile = currentMachineProfile();
+      const profile = currentMachineEditProfile();
       if (!profile) return;
       profile.nome = el.machineNome.value.trim() || "Sem nome";
       profile.potenciaW = numVal("machinePotencia");
       profile.valorCompra = numVal("machineValor");
-      profile.vidaUtilHoras = Math.max(1, numVal("machineVidaUtil"));
+      profile.vidaUtilHoras = Math.max(0, numVal("machineVidaUtil"));
       Storage.saveMachineProfiles(machineProfiles);
       renderProfileSelect(el.machineProfileSelect, machineProfiles);
-      el.machineProfileSelect.value = profile.id;
+      renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
+      el.machineProfileEditSelect.value = profile.id;
       flashFeedback("Perfil de máquina salvo.");
       recalculate();
     });
@@ -212,11 +228,12 @@ const UI = (() => {
         alert("Você precisa manter ao menos um perfil de máquina.");
         return;
       }
-      const profile = currentMachineProfile();
+      const profile = currentMachineEditProfile();
       if (!confirm(`Excluir o perfil "${profile.nome}"?`)) return;
       machineProfiles = machineProfiles.filter((p) => p.id !== profile.id);
       Storage.saveMachineProfiles(machineProfiles);
       renderProfileSelect(el.machineProfileSelect, machineProfiles);
+      renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
       fillMachineFields(machineProfiles[0]);
       recalculate();
     });
@@ -363,7 +380,7 @@ const UI = (() => {
       tempoMinutos: numVal("tempoMinutos"),
       potenciaW: machine.potenciaW || 0,
       valorCompraMaquina: machine.valorCompra || 0,
-      vidaUtilHoras: machine.vidaUtilHoras || 1,
+      vidaUtilHoras: machine.vidaUtilHoras || 0,
       valorKwh: numVal("valorKwh"),
       prepMinutos: numVal("prepMinutos"),
       valorHoraTrabalho: numVal("valorHora"),
@@ -374,6 +391,11 @@ const UI = (() => {
       quantidade: numVal("quantidadePecas"),
       precoMarketeiro: el.precoMarketeiro.checked,
     };
+  }
+
+  function formatTempo(horasDecimais) {
+    const totalMin = Math.round(Math.max(0, horasDecimais) * 60);
+    return `${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
   }
 
   let lastResult = null;
@@ -392,13 +414,21 @@ const UI = (() => {
       el.outPrecoMarketeiro.hidden = true;
     }
 
+    el.outQtdLabel.textContent = r.quantidade;
+    el.outTotalQtd.textContent = Calculator.formatarMoeda(r.precoTotalQtd);
+
+    // Barra "custo × lucro": qual fatia do preço final é lucro de fato.
+    const pctLucro = r.precoFinal > 0 ? Math.max(0, Math.min(100, (r.lucroFinal / r.precoFinal) * 100)) : 0;
+    el.ratioBarFill.style.width = `${pctLucro}%`;
+    el.ratioBarLabel.textContent = `${Math.round(pctLucro)}% do preço é lucro`;
+
     el.pesoTotalDisplay.textContent = formatGramas(r.pesoTotalG);
     el.outCustoTotal.textContent = Calculator.formatarMoeda(r.custoAjustado);
     el.outLucroUnitario.textContent = Calculator.formatarMoeda(r.lucroUnitario);
-    el.outQtdLabel.textContent = r.quantidade;
-    el.outTotalQtd.textContent = Calculator.formatarMoeda(r.precoTotalQtd);
-    el.outLucroTotal.textContent = Calculator.formatarMoeda(r.lucroTotalQtd);
+    el.outTempoTotal.textContent = formatTempo(r.tempoImpressaoH);
+    el.outPesoTotalStat.textContent = formatGramas(r.pesoTotalG);
 
+    updateInsightCallout(r);
     renderBreakdown(r);
     CostChart.render(r);
 
@@ -410,26 +440,50 @@ const UI = (() => {
     });
   }
 
+  /** Mensagem contextual: quantas peças como essa pagam o investimento na impressora. */
+  function updateInsightCallout(r) {
+    const machine = currentMachineProfile();
+    if (machine && machine.valorCompra > 0 && r.lucroUnitario > 0) {
+      const pecas = Math.ceil(machine.valorCompra / r.lucroUnitario);
+      el.insightCallout.hidden = false;
+      el.insightCallout.textContent = `💡 Com esse lucro, ${pecas} peça${pecas === 1 ? "" : "s"} como essa pagam sua ${machine.nome}.`;
+    } else {
+      el.insightCallout.hidden = true;
+    }
+  }
+
   function renderBreakdown(r) {
-    // Uma linha por filamento usado na peça (multi-material/multi-cor).
-    let html = r.materiaisDetalhe.map((m) => `
-      <li><span class="label">Filamento — ${escapeHtml(m.nome)} (${formatGramas(m.pesoG)})</span><span class="value">${Calculator.formatarMoeda(m.custo)}</span></li>
-    `).join("");
+    // "Anatomia do custo": uma barrinha por item, proporcional ao maior valor
+    // da lista — dá pra ver de relance o que mais pesa no preço.
+    const itemRows = r.materiaisDetalhe.map((m) => ({
+      label: `Filamento — ${escapeHtml(m.nome)} (${formatGramas(m.pesoG)})`,
+      value: m.custo,
+    }));
+    itemRows.push(
+      { label: "Energia", value: r.custoEnergia },
+      { label: "Depreciação da máquina", value: r.custoDepreciacao },
+      { label: "Mão de obra", value: r.custoMaoDeObra },
+      { label: "Embalagem", value: r.custoEmbalagem },
+      { label: "Custos extras", value: r.custosExtras },
+    );
 
-    const rows = [
-      ["Energia", r.custoEnergia],
-      ["Depreciação da máquina", r.custoDepreciacao],
-      ["Mão de obra", r.custoMaoDeObra],
-      ["Embalagem", r.custoEmbalagem],
-      ["Custos extras", r.custosExtras],
-    ];
-    html += rows.map(([label, value]) => `
-      <li><span class="label">${label}</span><span class="value">${Calculator.formatarMoeda(value)}</span></li>
-    `).join("");
+    const maxValue = Math.max(1, ...itemRows.map((row) => row.value));
+    let html = itemRows.map((row) => {
+      const pct = Math.max(0, Math.min(100, (row.value / maxValue) * 100));
+      return `
+        <li>
+          <div class="breakdown-row"><span class="label">${row.label}</span><span class="value">${Calculator.formatarMoeda(row.value)}</span></div>
+          <div class="breakdown-bar"><div class="breakdown-bar-fill" style="width:${pct}%"></div></div>
+        </li>
+      `;
+    }).join("");
 
-    html += `<li><span class="label">Custo base</span><span class="value">${Calculator.formatarMoeda(r.custoBase)}</span></li>`;
-    html += `<li><span class="label">Ajuste por taxa de falha</span><span class="value">${Calculator.formatarMoeda(r.custoAjustado - r.custoBase)}</span></li>`;
-    html += `<li class="total"><span class="label">Custo total ajustado</span><span class="value">${Calculator.formatarMoeda(r.custoAjustado)}</span></li>`;
+    const plainRow = (label, value, extraClass = "") => `
+      <li class="plain ${extraClass}"><div class="breakdown-row"><span class="label">${label}</span><span class="value">${Calculator.formatarMoeda(value)}</span></div></li>
+    `;
+    html += plainRow("Custo base", r.custoBase);
+    html += plainRow("Ajuste por taxa de falha", r.custoAjustado - r.custoBase);
+    html += plainRow("Custo total ajustado", r.custoAjustado, "total");
 
     el.breakdownList.innerHTML = html;
   }
@@ -512,7 +566,7 @@ const UI = (() => {
       $("calcForm").reset();
       el.pieceName.value = "";
       syncMarkupUI(100, "init");
-      syncTaxaFalhaUI(5, "init");
+      syncTaxaFalhaUI(0, "init");
       resetMaterialRows();
       recalculate();
     });
@@ -525,6 +579,20 @@ const UI = (() => {
         e.preventDefault();
         $("btnReset").click();
       }
+    });
+  }
+
+  // -------------------------------------------------- Configurações fixas
+
+  /** Painel recolhível com tudo que raramente muda entre peças. */
+  function bindAdvancedToggle() {
+    const btn = $("btnToggleAdvanced");
+    const content = $("advancedContent");
+    btn.addEventListener("click", () => {
+      const willOpen = content.hidden;
+      content.hidden = !willOpen;
+      btn.setAttribute("aria-expanded", String(willOpen));
+      btn.classList.toggle("is-open", willOpen);
     });
   }
 
@@ -564,6 +632,7 @@ const UI = (() => {
     bindCopyBudget();
     bindReset();
     bindKeyboardShortcuts();
+    bindAdvancedToggle();
     bindLiveRecalculation();
 
     document.addEventListener("calculaai:themechange", () => CostChart.refreshColors());

@@ -467,11 +467,52 @@ input[type="range"].slider.slider-warn::-moz-range-thumb {
   border-radius: 999px;
   margin-top: 4px;
 }
+.price-hero-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.price-hero-sub strong { color: var(--text); font-weight: 700; }
+
+/* Barra "custo × lucro": fatia verde = parte do preço que é lucro real. */
+.ratio-bar-wrap { margin: 4px 0 16px; }
+.ratio-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.ratio-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--success);
+  border-radius: 999px;
+  transition: width .15s ease;
+}
+.ratio-bar-label {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
 
 .price-secondary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.insight-callout {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.5;
 }
 
 .mini-stat {
@@ -527,17 +568,77 @@ input[type="range"].slider.slider-warn::-moz-range-thumb {
   padding: 0;
 }
 .breakdown-list li {
-  display: flex;
-  justify-content: space-between;
   padding: 9px 0;
   border-bottom: 1px solid var(--border);
   font-size: 13.5px;
 }
 .breakdown-list li:last-child { border-bottom: none; }
+.breakdown-row { display: flex; justify-content: space-between; gap: 8px; }
 .breakdown-list .label { color: var(--text-muted); }
-.breakdown-list .value { font-weight: 700; }
+.breakdown-list .value { font-weight: 700; flex-shrink: 0; }
 .breakdown-list li.total .label,
 .breakdown-list li.total .value { color: var(--text); font-size: 15px; }
+
+.breakdown-bar {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.breakdown-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width .15s ease;
+}
+
+/* ---------------------------------------------------------------------- */
+/* "Configurações fixas": painel recolhível pro que raramente muda         */
+/* ---------------------------------------------------------------------- */
+.collapsible { margin-bottom: 16px; }
+
+.collapsible-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .12s ease;
+}
+.collapsible-toggle:hover { border-color: var(--primary); }
+.collapsible-toggle small { color: var(--text-muted); font-weight: 500; }
+
+.collapsible-chevron {
+  flex-shrink: 0;
+  transition: transform .15s ease;
+  color: var(--text-muted);
+}
+.collapsible-toggle.is-open .collapsible-chevron { transform: rotate(180deg); }
+.collapsible-toggle.is-open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-color: var(--primary);
+}
+
+.collapsible-content {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  padding: 16px 16px 4px;
+  background: var(--bg-alt);
+}
+.collapsible-content .card:last-child { margin-bottom: 12px; }
 
 /* ---------------------------------------------------------------------- */
 /* Rodapé                                                                  */

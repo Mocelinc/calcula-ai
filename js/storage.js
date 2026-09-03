@@ -16,20 +16,25 @@ const Storage = (() => {
 
   /** Perfis padrão criados na primeira execução (primeiro uso do app). */
   const DEFAULT_MACHINE_PROFILES = [
-    // Consumo médio durante a impressão (~55W) baseado em medições da comunidade;
-    // a potência nominal/máxima da fonte é 150W (usada só em aquecimento).
-    { id: "machine-default-1", nome: "Bambu Lab A1 mini", potenciaW: 55, valorCompra: 2600, vidaUtilHoras: 8000 },
-    { id: "machine-default-2", nome: "Ender 3 V2", potenciaW: 150, valorCompra: 1200, vidaUtilHoras: 8000 },
+    // Consumo médio durante a impressão (~55W) baseado em medições da comunidade
+    // Bambu Lab; a potência nominal/máxima da fonte é 150W (só no aquecimento).
+    // Vida útil fica em 0 (não confirmada) até você preencher a sua estimativa —
+    // a depreciação simplesmente não entra no custo enquanto isso.
+    { id: "machine-default-1", nome: "Bambu Lab A1 mini", potenciaW: 55, valorCompra: 2600, vidaUtilHoras: 0 },
   ];
 
+  // Preços de exemplo (os mesmos usados como referência no briefing do projeto).
   const DEFAULT_MATERIAL_PROFILES = [
     { id: "material-default-1", nome: "PLA Genérico", precoKg: 90 },
     { id: "material-default-2", nome: "PETG Premium", precoKg: 150 },
   ];
 
   const DEFAULT_SETTINGS = {
-    valorKwh: 4.0,
-    valorHora: 20,
+    // R$/kWh residencial da RGE Sul (distribuidora que atende Frederico
+    // Westphalen/RS), tarifa vigente a partir de 06/2026. Ajuste se sua
+    // conta de luz mostrar um valor diferente (impostos variam por conta).
+    valorKwh: 0.945,
+    valorHora: 0, // não confirmado — defina quanto vale a sua hora de trabalho
     markup: 100, // markup numérico (%) — controlado pelo slider no card "Margem de Lucro"
   };
 

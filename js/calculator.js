@@ -36,7 +36,7 @@ const Calculator = (() => {
       tempoMinutos = 0,
       potenciaW = 0,
       valorCompraMaquina = 0,
-      vidaUtilHoras = 1, // evita divisão por zero
+      vidaUtilHoras = 0, // 0 = não confirmado ainda -> depreciação some do custo até ser preenchida
       valorKwh = 0,
       prepMinutos = 0,
       valorHoraTrabalho = 0,
@@ -66,9 +66,12 @@ const Calculator = (() => {
     const custoEnergia = (Math.max(0, potenciaW) / 1000) * tempoImpressaoH * Math.max(0, valorKwh);
 
     // 4. Depreciação da máquina: fração do valor de compra consumida
-    //    proporcionalmente ao tempo de impressão desta peça.
-    const vidaUtilSegura = vidaUtilHoras > 0 ? vidaUtilHoras : 1;
-    const custoDepreciacao = (Math.max(0, valorCompraMaquina) / vidaUtilSegura) * tempoImpressaoH;
+    //    proporcionalmente ao tempo de impressão desta peça. Se a vida útil
+    //    não foi preenchida (0 = "não confirmado"), a depreciação fica em
+    //    R$0 em vez de gerar um número distorcido por divisão indevida.
+    const custoDepreciacao = vidaUtilHoras > 0
+      ? (Math.max(0, valorCompraMaquina) / vidaUtilHoras) * tempoImpressaoH
+      : 0;
 
     // 5. Mão de obra: tempo de preparo/pós-processamento convertido em horas.
     const custoMaoDeObra = (Math.max(0, prepMinutos) / 60) * Math.max(0, valorHoraTrabalho);
