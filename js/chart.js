@@ -40,6 +40,19 @@ const CostChart = (() => {
 
     const data = _buildDataset(result);
     const colors = _colors();
+    const total = data.reduce((soma, v) => soma + v, 0);
+
+    // Um doughnut criado (ou atualizado) com todos os valores em zero deixa
+    // todos os arcos com ângulo zero, e o update("none") seguinte não os
+    // recalcula — o gráfico ficaria permanentemente em branco. Então: só
+    // criamos com dados reais, e recriamos ao sair de "tudo zero".
+    if (total <= 0) {
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      _renderLegend(LABELS, colors, data);
+      return;
+    }
 
     if (!chartInstance) {
       chartInstance = new Chart(canvas.getContext("2d"), {

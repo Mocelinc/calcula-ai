@@ -1,11 +1,11 @@
 /* =========================================================================
    Calcula.AI — Temas
    Cada tema define o mesmo conjunto de variáveis CSS (design tokens).
-   A troca de tema é feita via atributo [data-theme] na <html>,
-   controlada por js/theme.js.
+   A troca é feita pelo atributo [data-theme] na <html>, controlada por
+   js/theme.js (que também guarda o nome e as amostras de cor de cada um).
    ========================================================================= */
 
-/* ---------- Tema 1: Dark · Dracula ---------- */
+/* ---------- Dark · Dracula ---------- */
 html[data-theme="dark-dracula"] {
   --bg: #282a36;
   --bg-alt: #1e1f29;
@@ -25,7 +25,7 @@ html[data-theme="dark-dracula"] {
   --shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
-/* ---------- Tema 2: Dark · Nord ---------- */
+/* ---------- Dark · Nord ---------- */
 html[data-theme="dark-nord"] {
   --bg: #2e3440;
   --bg-alt: #242933;
@@ -45,7 +45,67 @@ html[data-theme="dark-nord"] {
   --shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
-/* ---------- Tema 3: Light · Minimalista ---------- */
+/* ---------- Dark · Tokyo Night ---------- */
+html[data-theme="dark-tokyo"] {
+  --bg: #1a1b26;
+  --bg-alt: #16161e;
+  --surface: #24283b;
+  --surface-alt: #2f334d;
+  --border: #414868;
+  --text: #c0caf5;
+  --text-muted: #8b95bf;
+  --primary: #7aa2f7;
+  --primary-hover: #96b6f9;
+  --primary-contrast: #1a1b26;
+  --accent: #bb9af7;
+  --success: #9ece6a;
+  --warning: #e0af68;
+  --danger: #f7768e;
+  --info: #7dcfff;
+  --shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* ---------- Dark · Gruvbox ---------- */
+html[data-theme="dark-gruvbox"] {
+  --bg: #282828;
+  --bg-alt: #1d2021;
+  --surface: #3c3836;
+  --surface-alt: #504945;
+  --border: #665c54;
+  --text: #ebdbb2;
+  --text-muted: #a89984;
+  --primary: #fabd2f;
+  --primary-hover: #fbca4d;
+  --primary-contrast: #282828;
+  --accent: #d3869b;
+  --success: #b8bb26;
+  --warning: #fe8019;
+  --danger: #fb4934;
+  --info: #83a598;
+  --shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* ---------- Dark · Catppuccin Mocha ---------- */
+html[data-theme="dark-catppuccin"] {
+  --bg: #1e1e2e;
+  --bg-alt: #181825;
+  --surface: #313244;
+  --surface-alt: #45475a;
+  --border: #585b70;
+  --text: #cdd6f4;
+  --text-muted: #a6adc8;
+  --primary: #cba6f7;
+  --primary-hover: #d9bdf9;
+  --primary-contrast: #1e1e2e;
+  --accent: #f5c2e7;
+  --success: #a6e3a1;
+  --warning: #f9e2af;
+  --danger: #f38ba8;
+  --info: #89dceb;
+  --shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* ---------- Light · Minimalista ---------- */
 html[data-theme="light-minimal"] {
   --bg: #fafafa;
   --bg-alt: #f0f0f0;
@@ -65,7 +125,7 @@ html[data-theme="light-minimal"] {
   --shadow: 0 4px 16px rgba(20,20,30,0.08);
 }
 
-/* ---------- Tema 4: Light · Ocean ---------- */
+/* ---------- Light · Ocean ---------- */
 html[data-theme="light-ocean"] {
   --bg: #f0f7fa;
   --bg-alt: #e1eef5;
@@ -85,7 +145,27 @@ html[data-theme="light-ocean"] {
   --shadow: 0 4px 16px rgba(2,60,90,0.08);
 }
 
-/* ---------- Cores fixas do gráfico (consistentes entre temas) ---------- */
+/* ---------- Light · Solarized ---------- */
+html[data-theme="light-solarized"] {
+  --bg: #eee8d5;
+  --bg-alt: #e3dcc4;
+  --surface: #fdf6e3;
+  --surface-alt: #f5eeda;
+  --border: #d5cdb4;
+  --text: #073642;
+  --text-muted: #657b83;
+  --primary: #268bd2;
+  --primary-hover: #1d6fa8;
+  --primary-contrast: #fdf6e3;
+  --accent: #6c71c4;
+  --success: #859900;
+  --warning: #b58900;
+  --danger: #dc322f;
+  --info: #2aa198;
+  --shadow: 0 4px 16px rgba(7,54,66,0.10);
+}
+
+/* ---------- Cores do gráfico (consistentes entre temas) ---------- */
 :root {
   --chart-filamento: var(--primary);
   --chart-energia: var(--warning);

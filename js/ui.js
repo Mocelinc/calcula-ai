@@ -1,12 +1,11 @@
 /* =========================================================================
    Calcula.AI — ui.js
    Liga o DOM aos módulos Storage / Calculator / CostChart.
-   Responsável por: perfis (CRUD), cálculo em tempo real, backup e
-   o botão "Copiar Orçamento".
+   Cuida da navegação entre telas, das listas de perfis (impressoras e
+   filamentos), do cálculo em tempo real, do backup e do "Copiar orçamento".
    ========================================================================= */
 
 const UI = (() => {
-  // Cache dos elementos usados com frequência.
   const el = {};
 
   let machineProfiles = [];
@@ -21,21 +20,10 @@ const UI = (() => {
     return Number.isFinite(v) ? v : 0;
   }
 
-  function cacheElements() {
-    [
-      "tempoHoras", "tempoMinutos",
-      "machineProfileSelect", "machineProfileEditSelect",
-      "machineNome", "machinePotencia", "machineValor", "machineVidaUtil",
-      "materialRows", "pesoTotalDisplay",
-      "materialProfileSelect", "materialNome", "materialPrecoKg",
-      "valorKwh", "prepMinutos", "valorHora", "custoEmbalagem", "custosExtras",
-      "taxaFalhaSlider", "taxaFalhaNumber",
-      "markupSlider", "markupNumber", "markupChips", "markupThermoMarker", "markupThermoLabel",
-      "quantidadePecas", "precoMarketeiro", "pieceName",
-      "outPrecoUnitario", "outPrecoMarketeiro", "outCustoTotal", "outLucroUnitario",
-      "outTempoTotal", "outPesoTotalStat", "ratioBarFill", "ratioBarLabel", "insightCallout",
-      "outQtdLabel", "outTotalQtd", "breakdownList", "copyFeedback",
-    ].forEach((id) => { el[id] = $(id); });
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
   }
 
   function formatGramas(g) {
@@ -43,70 +31,268 @@ const UI = (() => {
     return `${(Math.round(n * 10) / 10).toString().replace(".", ",")} g`;
   }
 
-  // ------------------------------------------------------ Perfis: Máquina
+  function formatTempo(horasDecimais) {
+    const totalMin = Math.round(Math.max(0, horasDecimais) * 60);
+    return `${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
+  }
 
-  // machineProfileSelect (painel principal) escolhe qual máquina é usada
-  // NESTA peça; machineProfileEditSelect (Configurações fixas) escolhe qual
-  // perfil está sendo editado no formulário de CRUD — são independentes.
+  function cacheElements() {
+    [
+      "tempoImpressao", "tempoHint", "machineProfileSelect", "machineHint",
+      "materialRows", "pesoTotalDisplay",
+      "valorKwh", "prepMinutos", "valorHora", "custoEmbalagem", "custosExtras",
+      "taxaFalhaSlider", "taxaFalhaNumber",
+      "markupSlider", "markupNumber", "markupChips", "markupThermoMarker", "markupThermoLabel",
+      "quantidadePecas", "precoMarketeiro", "pieceName",
+      "outPrecoUnitario", "outPrecoMarketeiro", "outCustoTotal", "outLucroUnitario",
+      "outTempoTotal", "outPesoTotalStat", "ratioBarFill", "ratioBarLabel", "insightCallout",
+      "outQtdLabel", "outTotalQtd", "breakdownList", "copyFeedback",
+      "machineList", "materialList",
+    ].forEach((id) => { el[id] = $(id); });
+  }
+
+  // ------------------------------------------------------------ Navegação
+
+  function bindNavigation() {
+    document.querySelectorAll(".nav-item").forEach((btn) => {
+      btn.addEventListener("click", () => showView(btn.dataset.view));
+    });
+  }
+
+  function showView(viewName) {
+    document.querySelectorAll(".view").forEach((view) => {
+      view.hidden = view.id !== `view-${viewName}`;
+    });
+    document.querySelectorAll(".nav-item").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.view === viewName);
+    });
+    window.scrollTo({ top: 0 });
+  }
+
+  // ------------------------------------------------ Tempo (campo unificado)
+
+  /**
+   * Aceita os formatos que a pessoa naturalmente digitaria:
+   *   "8"        -> 8h 00min
+   *   "8,30"     -> 8h 30min      (mesma coisa com "8.30" ou "8:30")
+   *   "8,5"      -> 8h 05min      (dígitos após o separador são minutos literais)
+   *   "90min"    -> 1h 30min      (só minutos)
+   * @returns {{horas:number, minutos:number}}
+   */
+  function parseTempo(texto) {
+    const bruto = String(texto || "").trim().toLowerCase();
+    if (!bruto) return { horas: 0, minutos: 0 };
+
+    // Só minutos: "90min", "90m"
+    const soMinutos = bruto.match(/^(\d+(?:[.,]\d+)?)\s*m(?:in)?$/);
+    if (soMinutos) {
+      const min = Math.round(parseFloat(soMinutos[1].replace(",", ".")));
+      return { horas: Math.floor(min / 60), minutos: min % 60 };
+    }
+
+    const partes = bruto.replace(/\s|h/g, "").split(/[.,:]/);
+    const horas = Math.max(0, parseInt(partes[0], 10) || 0);
+    if (partes.length < 2 || partes[1] === "") return { horas, minutos: 0 };
+
+    // Minutos acima de 59 transbordam para a hora seguinte em vez de serem
+    // descartados ("2,75" vira 3h15min, não 2h59min).
+    const total = horas * 60 + Math.max(0, parseInt(partes[1], 10) || 0);
+    return { horas: Math.floor(total / 60), minutos: total % 60 };
+  }
+
+  function bindTempoField() {
+    el.tempoImpressao.addEventListener("input", () => {
+      atualizarTempoHint();
+      recalculate();
+    });
+    // Ao sair do campo, normaliza o texto para o formato canônico "8:30".
+    el.tempoImpressao.addEventListener("blur", () => {
+      const { horas, minutos } = parseTempo(el.tempoImpressao.value);
+      if (horas === 0 && minutos === 0) { el.tempoImpressao.value = ""; }
+      else { el.tempoImpressao.value = `${horas}:${String(minutos).padStart(2, "0")}`; }
+      atualizarTempoHint();
+    });
+  }
+
+  function atualizarTempoHint() {
+    const { horas, minutos } = parseTempo(el.tempoImpressao.value);
+    el.tempoHint.textContent = `= ${horas}h ${minutos}min`;
+  }
+
+  // ------------------------------------------------- Perfis de impressora
 
   function loadMachineProfiles() {
     machineProfiles = Storage.getMachineProfiles();
-    renderProfileSelect(el.machineProfileSelect, machineProfiles);
-    renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
-    fillMachineFields(currentMachineEditProfile());
+    renderMachineSelect();
+    renderMachineList();
   }
 
-  function fillMachineFields(profile) {
-    if (!profile) return;
-    el.machineNome.value = profile.nome;
-    el.machinePotencia.value = profile.potenciaW;
-    el.machineValor.value = profile.valorCompra;
-    el.machineVidaUtil.value = profile.vidaUtilHoras;
+  function renderMachineSelect() {
+    const prev = el.machineProfileSelect.value;
+    el.machineProfileSelect.innerHTML = machineProfiles
+      .map((p) => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
+    if (machineProfiles.some((p) => p.id === prev)) el.machineProfileSelect.value = prev;
+    atualizarMachineHint();
+  }
+
+  function atualizarMachineHint() {
+    const m = currentMachineProfile();
+    el.machineHint.textContent = m ? `${m.potenciaW} W · ${Calculator.formatarMoeda(m.valorCompra)}` : "";
   }
 
   function currentMachineProfile() {
     return machineProfiles.find((p) => p.id === el.machineProfileSelect.value) || machineProfiles[0];
   }
 
-  function currentMachineEditProfile() {
-    return machineProfiles.find((p) => p.id === el.machineProfileEditSelect.value) || machineProfiles[0];
+  function renderMachineList() {
+    el.machineList.innerHTML = machineProfiles.map((p) => `
+      <div class="profile-item" data-id="${p.id}">
+        <div class="profile-item-head">
+          <input type="text" class="pf-nome" value="${escapeHtml(p.nome)}" aria-label="Nome da impressora" />
+          <button type="button" class="btn btn-icon btn-danger pf-del" title="Excluir impressora">🗑️</button>
+        </div>
+        <div class="profile-fields three-col">
+          <label>Consumo (W)
+            <input type="number" class="pf-potencia" min="0" step="1" value="${p.potenciaW}" />
+          </label>
+          <label>Valor de compra (R$)
+            <input type="number" class="pf-valor" min="0" step="0.01" value="${p.valorCompra}" />
+          </label>
+          <label>Vida útil (h)
+            <input type="number" class="pf-vida" min="0" step="1" value="${p.vidaUtilHoras}" />
+          </label>
+        </div>
+        ${p.vidaUtilHoras > 0 ? "" : '<span class="profile-badge">Sem depreciação até definir a vida útil</span>'}
+      </div>
+    `).join("");
   }
 
-  // ------------------------------------------------------ Perfis: Material
+  function bindMachineList() {
+    $("btnAddMachine").addEventListener("click", () => {
+      machineProfiles.push({
+        id: Storage.uid("machine"),
+        nome: "Nova impressora",
+        potenciaW: 0,
+        valorCompra: 0,
+        vidaUtilHoras: 0,
+      });
+      Storage.saveMachineProfiles(machineProfiles);
+      renderMachineList();
+      renderMachineSelect();
+      recalculate();
+    });
+
+    // Auto-save: qualquer digitação já grava no localStorage.
+    el.machineList.addEventListener("input", (e) => {
+      const item = e.target.closest(".profile-item");
+      if (!item) return;
+      const profile = machineProfiles.find((p) => p.id === item.dataset.id);
+      if (!profile) return;
+
+      if (e.target.classList.contains("pf-nome")) profile.nome = e.target.value.trim() || "Sem nome";
+      if (e.target.classList.contains("pf-potencia")) profile.potenciaW = Math.max(0, parseFloat(e.target.value) || 0);
+      if (e.target.classList.contains("pf-valor")) profile.valorCompra = Math.max(0, parseFloat(e.target.value) || 0);
+      if (e.target.classList.contains("pf-vida")) profile.vidaUtilHoras = Math.max(0, parseFloat(e.target.value) || 0);
+
+      Storage.saveMachineProfiles(machineProfiles);
+      renderMachineSelect();
+      recalculate();
+    });
+
+    el.machineList.addEventListener("click", (e) => {
+      if (!e.target.closest(".pf-del")) return;
+      if (machineProfiles.length <= 1) {
+        alert("Você precisa manter ao menos uma impressora cadastrada.");
+        return;
+      }
+      const item = e.target.closest(".profile-item");
+      const profile = machineProfiles.find((p) => p.id === item.dataset.id);
+      if (!confirm(`Excluir "${profile.nome}"?`)) return;
+      machineProfiles = machineProfiles.filter((p) => p.id !== profile.id);
+      Storage.saveMachineProfiles(machineProfiles);
+      renderMachineList();
+      renderMachineSelect();
+      recalculate();
+    });
+  }
+
+  // -------------------------------------------------- Perfis de filamento
 
   function loadMaterialProfiles() {
     materialProfiles = Storage.getMaterialProfiles();
-    renderProfileSelect(el.materialProfileSelect, materialProfiles);
-    fillMaterialFields(materialProfiles[0]);
+    renderMaterialList();
   }
 
-  function fillMaterialFields(profile) {
-    if (!profile) return;
-    el.materialNome.value = profile.nome;
-    el.materialPrecoKg.value = profile.precoKg;
+  function renderMaterialList() {
+    el.materialList.innerHTML = materialProfiles.map((p) => `
+      <div class="profile-item" data-id="${p.id}">
+        <div class="profile-item-head">
+          <input type="text" class="pf-nome" value="${escapeHtml(p.nome)}" aria-label="Nome do filamento" />
+          <button type="button" class="btn btn-icon btn-danger pf-del" title="Excluir filamento">🗑️</button>
+        </div>
+        <div class="profile-fields">
+          <label>Preço do rolo (R$/kg)
+            <input type="number" class="pf-preco" min="0" step="0.01" value="${p.precoKg}" />
+          </label>
+        </div>
+      </div>
+    `).join("");
   }
 
-  function currentMaterialProfile() {
-    return materialProfiles.find((p) => p.id === el.materialProfileSelect.value) || materialProfiles[0];
+  function bindMaterialList() {
+    $("btnAddMaterial").addEventListener("click", () => {
+      materialProfiles.push({ id: Storage.uid("material"), nome: "Novo filamento", precoKg: 0 });
+      Storage.saveMaterialProfiles(materialProfiles);
+      renderMaterialList();
+      refreshMaterialRowSelects();
+      recalculate();
+    });
+
+    el.materialList.addEventListener("input", (e) => {
+      const item = e.target.closest(".profile-item");
+      if (!item) return;
+      const profile = materialProfiles.find((p) => p.id === item.dataset.id);
+      if (!profile) return;
+
+      if (e.target.classList.contains("pf-nome")) profile.nome = e.target.value.trim() || "Sem nome";
+      if (e.target.classList.contains("pf-preco")) profile.precoKg = Math.max(0, parseFloat(e.target.value) || 0);
+
+      Storage.saveMaterialProfiles(materialProfiles);
+      refreshMaterialRowSelects();
+      recalculate();
+    });
+
+    el.materialList.addEventListener("click", (e) => {
+      if (!e.target.closest(".pf-del")) return;
+      if (materialProfiles.length <= 1) {
+        alert("Você precisa manter ao menos um filamento cadastrado.");
+        return;
+      }
+      const item = e.target.closest(".profile-item");
+      const profile = materialProfiles.find((p) => p.id === item.dataset.id);
+      if (!confirm(`Excluir "${profile.nome}"?`)) return;
+      materialProfiles = materialProfiles.filter((p) => p.id !== profile.id);
+      Storage.saveMaterialProfiles(materialProfiles);
+      renderMaterialList();
+      refreshMaterialRowSelects();
+      recalculate();
+    });
   }
 
   // ---------------------------------------------- Filamentos usados na peça
-  // Suporta multi-material: cada linha é um filamento com peso e perfil
-  // (preço/kg) próprios — ex.: 2 cores de PLA com preços diferentes.
-
-  let materialRowSeq = 0;
+  // Multi-material: cada linha é um filamento com peso e preço/kg próprios.
 
   function materialRowOptionsHtml(selectedId) {
-    return materialProfiles.map((p) => `<option value="${p.id}"${p.id === selectedId ? " selected" : ""}>${escapeHtml(p.nome)}</option>`).join("");
+    return materialProfiles
+      .map((p) => `<option value="${p.id}"${p.id === selectedId ? " selected" : ""}>${escapeHtml(p.nome)}</option>`)
+      .join("");
   }
 
   function addMaterialRow(profileId, pesoG) {
-    const rowId = `mrow-${++materialRowSeq}`;
     const row = document.createElement("div");
     row.className = "material-row";
-    row.dataset.rowId = rowId;
     row.innerHTML = `
-      <select class="material-row-select" aria-label="Perfil de material desta linha">${materialRowOptionsHtml(profileId)}</select>
+      <select class="material-row-select" aria-label="Filamento desta linha">${materialRowOptionsHtml(profileId)}</select>
       <input type="number" class="material-row-peso" min="0" step="0.1" value="${pesoG}" aria-label="Peso deste filamento (g)" />
       <button type="button" class="btn btn-icon btn-danger material-row-remove" title="Remover filamento">🗑️</button>
     `;
@@ -115,17 +301,16 @@ const UI = (() => {
 
   function resetMaterialRows() {
     el.materialRows.innerHTML = "";
-    const firstId = materialProfiles[0] ? materialProfiles[0].id : "";
-    addMaterialRow(firstId, 0);
+    addMaterialRow(materialProfiles[0] ? materialProfiles[0].id : "", 0);
   }
 
-  /** Reconstrói as <option> de todas as linhas quando o catálogo de perfis muda. */
+  /** Reconstrói as <option> de todas as linhas quando o catálogo muda. */
   function refreshMaterialRowSelects() {
     el.materialRows.querySelectorAll(".material-row-select").forEach((select) => {
       const prev = select.value;
-      const stillExists = materialProfiles.some((p) => p.id === prev);
-      const fallbackId = materialProfiles[0] ? materialProfiles[0].id : "";
-      select.innerHTML = materialRowOptionsHtml(stillExists ? prev : fallbackId);
+      const valido = materialProfiles.some((p) => p.id === prev);
+      const fallback = materialProfiles[0] ? materialProfiles[0].id : "";
+      select.innerHTML = materialRowOptionsHtml(valido ? prev : fallback);
     });
   }
 
@@ -145,151 +330,24 @@ const UI = (() => {
 
   function bindMaterialRows() {
     $("btnAddMaterialRow").addEventListener("click", () => {
-      const firstId = materialProfiles[0] ? materialProfiles[0].id : "";
-      addMaterialRow(firstId, 0);
+      addMaterialRow(materialProfiles[0] ? materialProfiles[0].id : "", 0);
       recalculate();
     });
 
-    // Remoção via delegação (as linhas são criadas dinamicamente).
     el.materialRows.addEventListener("click", (e) => {
-      const btn = e.target.closest(".material-row-remove");
-      if (!btn) return;
+      if (!e.target.closest(".material-row-remove")) return;
       if (el.materialRows.querySelectorAll(".material-row").length <= 1) {
         alert("A peça precisa ter ao menos um filamento.");
         return;
       }
-      btn.closest(".material-row").remove();
-      recalculate();
-    });
-
-    // Alterações de select/peso dentro das linhas já disparam recalculate()
-    // via bindLiveRecalculation(), pois as linhas vivem dentro de #calcForm.
-  }
-
-  // ------------------------------------------------------------- Genérico
-
-  function renderProfileSelect(selectEl, list) {
-    const prevValue = selectEl.value;
-    selectEl.innerHTML = list.map((p) => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
-    if (list.some((p) => p.id === prevValue)) selectEl.value = prevValue;
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-  }
-
-  function bindProfileCrud() {
-    // --- Máquina ---
-    // Select principal: só escolhe qual perfil vale para a peça atual.
-    el.machineProfileSelect.addEventListener("change", recalculate);
-
-    // Select de edição (dentro de "Configurações fixas"): carrega os campos do CRUD.
-    el.machineProfileEditSelect.addEventListener("change", () => {
-      fillMachineFields(currentMachineEditProfile());
-    });
-
-    $("btnMachineNew").addEventListener("click", () => {
-      const novo = {
-        id: Storage.uid("machine"),
-        nome: "Nova Máquina",
-        potenciaW: 150,
-        valorCompra: 1000,
-        vidaUtilHoras: 0,
-      };
-      machineProfiles.push(novo);
-      Storage.saveMachineProfiles(machineProfiles);
-      renderProfileSelect(el.machineProfileSelect, machineProfiles);
-      renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
-      el.machineProfileEditSelect.value = novo.id;
-      fillMachineFields(novo);
-      el.machineNome.focus();
-      recalculate();
-    });
-
-    $("btnMachineSave").addEventListener("click", () => {
-      const profile = currentMachineEditProfile();
-      if (!profile) return;
-      profile.nome = el.machineNome.value.trim() || "Sem nome";
-      profile.potenciaW = numVal("machinePotencia");
-      profile.valorCompra = numVal("machineValor");
-      profile.vidaUtilHoras = Math.max(0, numVal("machineVidaUtil"));
-      Storage.saveMachineProfiles(machineProfiles);
-      renderProfileSelect(el.machineProfileSelect, machineProfiles);
-      renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
-      el.machineProfileEditSelect.value = profile.id;
-      flashFeedback("Perfil de máquina salvo.");
-      recalculate();
-    });
-
-    $("btnMachineDelete").addEventListener("click", () => {
-      if (machineProfiles.length <= 1) {
-        alert("Você precisa manter ao menos um perfil de máquina.");
-        return;
-      }
-      const profile = currentMachineEditProfile();
-      if (!confirm(`Excluir o perfil "${profile.nome}"?`)) return;
-      machineProfiles = machineProfiles.filter((p) => p.id !== profile.id);
-      Storage.saveMachineProfiles(machineProfiles);
-      renderProfileSelect(el.machineProfileSelect, machineProfiles);
-      renderProfileSelect(el.machineProfileEditSelect, machineProfiles);
-      fillMachineFields(machineProfiles[0]);
-      recalculate();
-    });
-
-    // --- Material ---
-    el.materialProfileSelect.addEventListener("change", () => {
-      fillMaterialFields(currentMaterialProfile());
-      recalculate();
-    });
-
-    $("btnMaterialNew").addEventListener("click", () => {
-      const novo = { id: Storage.uid("material"), nome: "Novo Material", precoKg: 100 };
-      materialProfiles.push(novo);
-      Storage.saveMaterialProfiles(materialProfiles);
-      renderProfileSelect(el.materialProfileSelect, materialProfiles);
-      el.materialProfileSelect.value = novo.id;
-      fillMaterialFields(novo);
-      refreshMaterialRowSelects();
-      el.materialNome.focus();
-      recalculate();
-    });
-
-    $("btnMaterialSave").addEventListener("click", () => {
-      const profile = currentMaterialProfile();
-      if (!profile) return;
-      profile.nome = el.materialNome.value.trim() || "Sem nome";
-      profile.precoKg = numVal("materialPrecoKg");
-      Storage.saveMaterialProfiles(materialProfiles);
-      renderProfileSelect(el.materialProfileSelect, materialProfiles);
-      el.materialProfileSelect.value = profile.id;
-      refreshMaterialRowSelects();
-      flashFeedback("Perfil de material salvo.");
-      recalculate();
-    });
-
-    $("btnMaterialDelete").addEventListener("click", () => {
-      if (materialProfiles.length <= 1) {
-        alert("Você precisa manter ao menos um perfil de material.");
-        return;
-      }
-      const profile = currentMaterialProfile();
-      if (!confirm(`Excluir o perfil "${profile.nome}"?`)) return;
-      materialProfiles = materialProfiles.filter((p) => p.id !== profile.id);
-      Storage.saveMaterialProfiles(materialProfiles);
-      renderProfileSelect(el.materialProfileSelect, materialProfiles);
-      fillMaterialFields(materialProfiles[0]);
-      refreshMaterialRowSelects();
+      e.target.closest(".material-row").remove();
       recalculate();
     });
   }
 
   // ------------------------------------------------------------- Markup UI
-  // Slider + campo numérico ficam sincronizados nos dois sentidos, e os
-  // chips de preset (+50/+75/+100/+200%) pulam direto para o valor.
 
-  /** @param {"slider"|"number"|"chip"|"init"} source Quem originou a mudança, pra não sobrescrever o próprio controle. */
+  /** @param {"slider"|"number"|"chip"|"init"} source */
   function syncMarkupUI(value, source) {
     const v = Math.max(0, Number.isFinite(value) ? value : 0);
     if (source !== "slider") el.markupSlider.value = Math.min(v, parseFloat(el.markupSlider.max));
@@ -300,11 +358,9 @@ const UI = (() => {
     updateMarkupThermo(v);
   }
 
-  /** Termômetro visual: indica se a margem está baixa/moderada/saudável/premium. */
   function updateMarkupThermo(v) {
     const max = parseFloat(el.markupSlider.max);
-    const pct = Math.max(0, Math.min(100, (v / max) * 100));
-    el.markupThermoMarker.style.left = `${pct}%`;
+    el.markupThermoMarker.style.left = `${Math.max(0, Math.min(100, (v / max) * 100))}%`;
 
     let tier, label;
     if (v < 30) { tier = "tier-low"; label = "Baixa"; }
@@ -332,13 +388,10 @@ const UI = (() => {
     });
   }
 
-  function currentMarkupPct() {
-    return numVal("markupNumber");
-  }
+  function currentMarkupPct() { return numVal("markupNumber"); }
 
   // -------------------------------------------------------- Taxa de falha
 
-  /** @param {"slider"|"number"|"init"} source */
   function syncTaxaFalhaUI(value, source) {
     const max = parseFloat(el.taxaFalhaSlider.max);
     const v = Math.max(0, Math.min(max, Number.isFinite(value) ? value : 0));
@@ -374,10 +427,11 @@ const UI = (() => {
 
   function gatherInput() {
     const machine = currentMachineProfile() || {};
+    const tempo = parseTempo(el.tempoImpressao.value);
     return {
       materiais: readMaterialRows(),
-      tempoHoras: numVal("tempoHoras"),
-      tempoMinutos: numVal("tempoMinutos"),
+      tempoHoras: tempo.horas,
+      tempoMinutos: tempo.minutos,
       potenciaW: machine.potenciaW || 0,
       valorCompraMaquina: machine.valorCompra || 0,
       vidaUtilHoras: machine.vidaUtilHoras || 0,
@@ -391,11 +445,6 @@ const UI = (() => {
       quantidade: numVal("quantidadePecas"),
       precoMarketeiro: el.precoMarketeiro.checked,
     };
-  }
-
-  function formatTempo(horasDecimais) {
-    const totalMin = Math.round(Math.max(0, horasDecimais) * 60);
-    return `${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
   }
 
   let lastResult = null;
@@ -417,7 +466,6 @@ const UI = (() => {
     el.outQtdLabel.textContent = r.quantidade;
     el.outTotalQtd.textContent = Calculator.formatarMoeda(r.precoTotalQtd);
 
-    // Barra "custo × lucro": qual fatia do preço final é lucro de fato.
     const pctLucro = r.precoFinal > 0 ? Math.max(0, Math.min(100, (r.lucroFinal / r.precoFinal) * 100)) : 0;
     el.ratioBarFill.style.width = `${pctLucro}%`;
     el.ratioBarLabel.textContent = `${Math.round(pctLucro)}% do preço é lucro`;
@@ -428,11 +476,11 @@ const UI = (() => {
     el.outTempoTotal.textContent = formatTempo(r.tempoImpressaoH);
     el.outPesoTotalStat.textContent = formatGramas(r.pesoTotalG);
 
+    atualizarMachineHint();
     updateInsightCallout(r);
     renderBreakdown(r);
     CostChart.render(r);
 
-    // Persiste as configurações gerais (não os perfis) para a próxima sessão.
     Storage.saveSettings({
       valorKwh: input.valorKwh,
       valorHora: input.valorHoraTrabalho,
@@ -440,7 +488,7 @@ const UI = (() => {
     });
   }
 
-  /** Mensagem contextual: quantas peças como essa pagam o investimento na impressora. */
+  /** Quantas peças como essa pagam o investimento na impressora. */
   function updateInsightCallout(r) {
     const machine = currentMachineProfile();
     if (machine && machine.valorCompra > 0 && r.lucroUnitario > 0) {
@@ -453,8 +501,6 @@ const UI = (() => {
   }
 
   function renderBreakdown(r) {
-    // "Anatomia do custo": uma barrinha por item, proporcional ao maior valor
-    // da lista — dá pra ver de relance o que mais pesa no preço.
     const itemRows = r.materiaisDetalhe.map((m) => ({
       label: `Filamento — ${escapeHtml(m.nome)} (${formatGramas(m.pesoG)})`,
       value: m.custo,
@@ -482,7 +528,7 @@ const UI = (() => {
       <li class="plain ${extraClass}"><div class="breakdown-row"><span class="label">${label}</span><span class="value">${Calculator.formatarMoeda(value)}</span></div></li>
     `;
     html += plainRow("Custo base", r.custoBase);
-    html += plainRow("Ajuste por taxa de falha", r.custoAjustado - r.custoBase);
+    html += plainRow("Ajuste por risco de falha", r.custoAjustado - r.custoBase);
     html += plainRow("Custo total ajustado", r.custoAjustado, "total");
 
     el.breakdownList.innerHTML = html;
@@ -493,7 +539,7 @@ const UI = (() => {
   function bindBackup() {
     $("btnExport").addEventListener("click", () => {
       Storage.downloadExport();
-      flashFeedback("Backup exportado com sucesso.");
+      flashFeedback("Backup exportado.");
     });
 
     $("btnImportTrigger").addEventListener("click", () => $("btnImportFile").click());
@@ -504,20 +550,19 @@ const UI = (() => {
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const payload = JSON.parse(reader.result);
-          const count = Storage.importAll(payload);
-          alert(`Backup importado com sucesso (${count} chave(s) restaurada(s)). A página será recarregada.`);
+          const count = Storage.importAll(JSON.parse(reader.result));
+          alert(`Backup importado (${count} chave(s) restaurada(s)). A página será recarregada.`);
           location.reload();
         } catch (err) {
           alert(`Erro ao importar backup: ${err.message}`);
         }
       };
       reader.readAsText(file);
-      e.target.value = ""; // permite reimportar o mesmo arquivo depois
+      e.target.value = "";
     });
   }
 
-  // --------------------------------------------------------- Copiar orçamento
+  // ----------------------------------------------------- Copiar orçamento
 
   function bindCopyBudget() {
     $("btnCopyBudget").addEventListener("click", async () => {
@@ -527,7 +572,6 @@ const UI = (() => {
         await navigator.clipboard.writeText(texto);
         flashFeedback("Orçamento copiado! Cole no WhatsApp do cliente.");
       } catch (err) {
-        // Fallback para navegadores sem permissão de clipboard.
         window.prompt("Copie o orçamento abaixo (Ctrl+C):", texto);
       }
     });
@@ -545,10 +589,8 @@ const UI = (() => {
       `Quantidade: ${r.quantidade}`,
       `Valor unitário: ${Calculator.formatarMoeda(r.precoFinal)}`,
     ];
-    if (r.quantidade > 1) {
-      linhas.push(`Valor total: ${Calculator.formatarMoeda(r.precoTotalQtd)}`);
-    }
-    linhas.push(`— Gerado com Calcula.AI`);
+    if (r.quantidade > 1) linhas.push(`Valor total: ${Calculator.formatarMoeda(r.precoTotalQtd)}`);
+    linhas.push("— Gerado com Calcula.AI");
     return linhas.join("\n");
   }
 
@@ -562,17 +604,19 @@ const UI = (() => {
 
   function bindReset() {
     $("btnReset").addEventListener("click", () => {
-      if (!confirm("Limpar todos os campos do orçamento atual? Perfis salvos não serão apagados.")) return;
+      if (!confirm("Limpar os campos do orçamento atual? Impressoras, filamentos e ajustes não são apagados.")) return;
       $("calcForm").reset();
       el.pieceName.value = "";
+      el.tempoImpressao.value = "";
+      atualizarTempoHint();
       syncMarkupUI(100, "init");
       syncTaxaFalhaUI(0, "init");
       resetMaterialRows();
+      showView("calc");
       recalculate();
     });
   }
 
-  /** Atalhos de teclado do workflow: Alt+R = Novo Orçamento. */
   function bindKeyboardShortcuts() {
     document.addEventListener("keydown", (e) => {
       if (e.altKey && e.key.toLowerCase() === "r") {
@@ -582,26 +626,21 @@ const UI = (() => {
     });
   }
 
-  // -------------------------------------------------- Configurações fixas
-
-  /** Painel recolhível com tudo que raramente muda entre peças. */
-  function bindAdvancedToggle() {
-    const btn = $("btnToggleAdvanced");
-    const content = $("advancedContent");
-    btn.addEventListener("click", () => {
-      const willOpen = content.hidden;
-      content.hidden = !willOpen;
-      btn.setAttribute("aria-expanded", String(willOpen));
-      btn.classList.toggle("is-open", willOpen);
-    });
-  }
-
   // ------------------------------------------------------- Inicialização
 
+  /**
+   * Escuta no documento inteiro (e não só no formulário) porque os campos de
+   * Ajustes vivem em outra tela, fora do <form> da calculadora.
+   */
   function bindLiveRecalculation() {
-    const form = $("calcForm");
-    form.addEventListener("input", recalculate);
-    form.addEventListener("change", recalculate);
+    document.addEventListener("input", (e) => {
+      if (e.target.closest(".profile-item")) return; // listas têm handler próprio
+      recalculate();
+    });
+    document.addEventListener("change", (e) => {
+      if (e.target.closest(".profile-item")) return;
+      recalculate();
+    });
   }
 
   function applySavedSettings() {
@@ -609,8 +648,7 @@ const UI = (() => {
     el.valorKwh.value = s.valorKwh;
     el.valorHora.value = s.valorHora;
 
-    // Migração: versões antigas guardavam markup como "50"/"100"/"custom"
-    // + markupCustom separado. Aceita ambos os formatos com segurança.
+    // Migração: versões antigas guardavam markup como "50"/"100"/"custom".
     let markupVal = parseFloat(s.markup);
     if (!Number.isFinite(markupVal)) markupVal = parseFloat(s.markupCustom);
     if (!Number.isFinite(markupVal)) markupVal = 100;
@@ -623,7 +661,12 @@ const UI = (() => {
     loadMaterialProfiles();
     resetMaterialRows();
     applySavedSettings();
-    bindProfileCrud();
+    atualizarTempoHint();
+
+    bindNavigation();
+    bindTempoField();
+    bindMachineList();
+    bindMaterialList();
     bindMaterialRows();
     bindMarkupControls();
     bindTaxaFalhaControls();
@@ -632,7 +675,6 @@ const UI = (() => {
     bindCopyBudget();
     bindReset();
     bindKeyboardShortcuts();
-    bindAdvancedToggle();
     bindLiveRecalculation();
 
     document.addEventListener("calculaai:themechange", () => CostChart.refreshColors());
