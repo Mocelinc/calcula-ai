@@ -14,13 +14,7 @@ Descubra quanto realmente custa cada peça — filamento, energia, depreciação
 
 ## 🤖 Sobre o nome
 
-**Calcula.AI** é um trocadilho de três camadas:
-
-| Leitura | Significado |
-|---|---|
-| *"Calcula aí"* | O jeito que a pergunta chega no WhatsApp: **"e aí, calcula aí quanto fica?"** |
-| *"Calculai"* | O imperativo de calcular — a ferramenta faz a conta pra você |
-| *".AI"* | De **Artificial Intelligence** |
+**Calcula.AI** 
 
 O `.AI` não é enfeite: **o projeto inteiro foi construído em parceria com uma IA** — regras de negócio, arquitetura, interface, paletas de cor, correção de bugs e o deploy. A ideia, as decisões de produto e a validação são humanas; a implementação nasceu de uma conversa. O nome é uma piada honesta sobre a própria origem do projeto.
 
