@@ -170,13 +170,15 @@ body {
 .view-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; }
 .view-header .hint { margin: 0; }
 
-/* Dashboard da calculadora: duas colunas */
+/* Dashboard: entradas à esquerda (largura fixa, são só campos) e os
+   resultados ocupando o resto — que se quebra em duas colunas sozinho
+   quando a tela permite, para caber tudo sem rolagem. */
 .dashboard {
   display: grid;
-  grid-template-columns: minmax(420px, 1fr) minmax(400px, 560px);
-  gap: 20px;
+  grid-template-columns: minmax(380px, 450px) minmax(380px, 1fr);
+  gap: 18px;
   align-items: start;
-  max-width: 1500px;
+  max-width: 1800px;
 }
 
 .panel { min-width: 0; }
@@ -184,13 +186,16 @@ body {
 .panel-results {
   position: sticky;
   top: 22px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
   gap: 16px;
+  align-items: start;
   max-height: calc(100vh - 44px);
   overflow-y: auto;
   padding-right: 4px;
 }
+
+.results-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 .panel-controls::-webkit-scrollbar,
 .panel-results::-webkit-scrollbar,
@@ -320,9 +325,23 @@ input:focus, select:focus {
 
 .material-row {
   display: grid;
-  grid-template-columns: 1fr 92px auto;
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) 72px 84px 32px;
+  gap: 6px;
   align-items: center;
+}
+
+/* Cabeçalho das colunas — alinhado no mesmo grid das linhas. */
+.material-row-head { padding: 0 2px 3px; }
+.material-row-head span { font-size: 10.5px; font-weight: 600; color: var(--text-muted); }
+
+.material-row select, .material-row input { padding: 7px 8px; font-size: 13px; }
+.material-row-remove { padding: 6px 0; width: 100%; }
+
+/* Preço diferente do cadastrado no catálogo: destaque de "só neste orçamento". */
+.material-row input.is-overridden {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* ---------------------------------------------------------------------- */

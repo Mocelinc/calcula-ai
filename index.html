@@ -91,6 +91,9 @@
               <p class="subheading">Filamentos</p>
               <span class="peso-total">Total: <strong id="pesoTotalDisplay">0 g</strong></span>
             </div>
+            <div class="material-row material-row-head" aria-hidden="true">
+              <span>Filamento</span><span>Peso (g)</span><span>R$/kg</span><span></span>
+            </div>
             <div class="material-rows" id="materialRows"><!-- linhas geradas via JS --></div>
             <button type="button" id="btnAddMaterialRow" class="btn btn-secondary btn-block-sm">＋ Adicionar filamento</button>
           </fieldset>
@@ -154,8 +157,9 @@
         </form>
       </div>
 
-      <!-- DIREITA: resultado em tempo real -->
+      <!-- DIREITA: resultado em tempo real (duas colunas quando há espaço) -->
       <div class="panel panel-results">
+        <div class="results-col">
         <div class="card result-summary">
           <div class="result-piece-name">
             <label for="pieceName" class="visually-hidden">Nome da peça</label>
@@ -205,15 +209,18 @@
           </div>
           <ul class="chart-legend" id="chartLegend"></ul>
         </div>
-
-        <div class="card breakdown-card">
-          <h2>Anatomia do custo</h2>
-          <ul class="breakdown-list" id="breakdownList"></ul>
         </div>
 
-        <div class="card actions-card">
-          <button type="button" id="btnCopyBudget" class="btn btn-primary btn-block">📋 Copiar orçamento</button>
-          <p class="hint" id="copyFeedback" aria-live="polite"></p>
+        <div class="results-col">
+          <div class="card breakdown-card">
+            <h2>Anatomia do custo</h2>
+            <ul class="breakdown-list" id="breakdownList"></ul>
+          </div>
+
+          <div class="card actions-card">
+            <button type="button" id="btnCopyBudget" class="btn btn-primary btn-block">📋 Copiar orçamento</button>
+            <p class="hint" id="copyFeedback" aria-live="polite"></p>
+          </div>
         </div>
       </div>
 

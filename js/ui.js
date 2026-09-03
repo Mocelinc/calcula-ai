@@ -288,15 +288,43 @@ const UI = (() => {
       .join("");
   }
 
-  function addMaterialRow(profileId, pesoG) {
+  function precoDoPerfil(profileId) {
+    const p = materialProfiles.find((m) => m.id === profileId);
+    return p ? p.precoKg : 0;
+  }
+
+  /**
+   * O preço da linha vem preenchido do catálogo, mas é editável: serve para
+   * um "e se este rolo custasse X?" sem sujar o cadastro. O valor de origem
+   * fica em data-base-preco para sabermos se houve edição manual.
+   */
+  function addMaterialRow(profileId, pesoG, precoKg) {
+    const base = precoDoPerfil(profileId);
+    const preco = precoKg === undefined ? base : precoKg;
+
     const row = document.createElement("div");
     row.className = "material-row";
+    row.dataset.basePreco = String(base);
     row.innerHTML = `
       <select class="material-row-select" aria-label="Filamento desta linha">${materialRowOptionsHtml(profileId)}</select>
       <input type="number" class="material-row-peso" min="0" step="0.1" value="${pesoG}" aria-label="Peso deste filamento (g)" />
+      <input type="number" class="material-row-preco" min="0" step="0.01" value="${preco}" aria-label="Preço por quilo deste filamento" />
       <button type="button" class="btn btn-icon btn-danger material-row-remove" title="Remover filamento">🗑️</button>
     `;
     el.materialRows.appendChild(row);
+    marcarPrecoEditado(row);
+  }
+
+  /** Destaca o campo quando o preço difere do que está salvo no catálogo. */
+  function marcarPrecoEditado(rowEl) {
+    const input = rowEl.querySelector(".material-row-preco");
+    const base = parseFloat(rowEl.dataset.basePreco);
+    const atual = parseFloat(input.value);
+    const editado = Number.isFinite(atual) && Number.isFinite(base) && Math.abs(atual - base) > 0.0001;
+    input.classList.toggle("is-overridden", editado);
+    input.title = editado
+      ? "Preço só deste orçamento — o catálogo continua com " + Calculator.formatarMoeda(base) + "/kg"
+      : "Preço vindo do catálogo de filamentos";
   }
 
   function resetMaterialRows() {
@@ -304,25 +332,37 @@ const UI = (() => {
     addMaterialRow(materialProfiles[0] ? materialProfiles[0].id : "", 0);
   }
 
-  /** Reconstrói as <option> de todas as linhas quando o catálogo muda. */
+  /**
+   * Reconstrói as <option> quando o catálogo muda. Linhas com preço não
+   * editado acompanham o novo valor; as editadas mantêm o override.
+   */
   function refreshMaterialRowSelects() {
-    el.materialRows.querySelectorAll(".material-row-select").forEach((select) => {
+    el.materialRows.querySelectorAll(".material-row").forEach((rowEl) => {
+      const select = rowEl.querySelector(".material-row-select");
+      const precoInput = rowEl.querySelector(".material-row-preco");
       const prev = select.value;
       const valido = materialProfiles.some((p) => p.id === prev);
-      const fallback = materialProfiles[0] ? materialProfiles[0].id : "";
-      select.innerHTML = materialRowOptionsHtml(valido ? prev : fallback);
+      const id = valido ? prev : (materialProfiles[0] ? materialProfiles[0].id : "");
+      select.innerHTML = materialRowOptionsHtml(id);
+
+      const baseAntiga = parseFloat(rowEl.dataset.basePreco);
+      const baseNova = precoDoPerfil(id);
+      const naoEditado = Math.abs(parseFloat(precoInput.value) - baseAntiga) < 0.0001;
+      rowEl.dataset.basePreco = String(baseNova);
+      if (naoEditado) precoInput.value = baseNova;
+      marcarPrecoEditado(rowEl);
     });
   }
 
   function readMaterialRows() {
     return Array.from(el.materialRows.querySelectorAll(".material-row")).map((rowEl) => {
       const select = rowEl.querySelector(".material-row-select");
-      const pesoInput = rowEl.querySelector(".material-row-peso");
       const profile = materialProfiles.find((p) => p.id === select.value);
-      const pesoG = parseFloat(pesoInput.value);
+      const pesoG = parseFloat(rowEl.querySelector(".material-row-peso").value);
+      const precoKg = parseFloat(rowEl.querySelector(".material-row-preco").value);
       return {
         nome: profile ? profile.nome : "Material",
-        precoKg: profile ? profile.precoKg : 0,
+        precoKg: Number.isFinite(precoKg) ? precoKg : 0,
         pesoG: Number.isFinite(pesoG) ? pesoG : 0,
       };
     });
@@ -332,6 +372,21 @@ const UI = (() => {
     $("btnAddMaterialRow").addEventListener("click", () => {
       addMaterialRow(materialProfiles[0] ? materialProfiles[0].id : "", 0);
       recalculate();
+    });
+
+    // Trocar de filamento repõe o preço do novo perfil (descarta o override).
+    el.materialRows.addEventListener("change", (e) => {
+      if (!e.target.classList.contains("material-row-select")) return;
+      const rowEl = e.target.closest(".material-row");
+      const base = precoDoPerfil(e.target.value);
+      rowEl.dataset.basePreco = String(base);
+      rowEl.querySelector(".material-row-preco").value = base;
+      marcarPrecoEditado(rowEl);
+    });
+
+    el.materialRows.addEventListener("input", (e) => {
+      if (!e.target.classList.contains("material-row-preco")) return;
+      marcarPrecoEditado(e.target.closest(".material-row"));
     });
 
     el.materialRows.addEventListener("click", (e) => {
