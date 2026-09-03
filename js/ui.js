@@ -38,8 +38,10 @@ const UI = (() => {
 
   function cacheElements() {
     [
-      "tempoImpressao", "tempoHint", "machineProfileSelect", "machineHint",
-      "materialRows", "pesoTotalDisplay",
+      "tempoImpressao", "tempoHint", "tempoLabel", "machineProfileSelect", "machineHint",
+      "materialRows", "pesoTotalDisplay", "filamentosSubheading",
+      "modoLoteRow", "modoLoteChips", "modoLoteHint",
+      "labelTempoTotal", "labelPesoTotal",
       "valorKwh", "prepMinutos", "valorHora", "custoEmbalagem", "custosExtras",
       "taxaFalhaSlider", "taxaFalhaNumber",
       "markupSlider", "markupNumber", "markupChips", "markupThermoMarker", "markupThermoLabel",
@@ -174,7 +176,7 @@ const UI = (() => {
         nome: "Nova impressora",
         potenciaW: 0,
         valorCompra: 0,
-        vidaUtilHoras: 0,
+        vidaUtilHoras: 8000, // estimativa de partida — ajustável
       });
       Storage.saveMachineProfiles(machineProfiles);
       renderMachineList();
@@ -465,6 +467,43 @@ const UI = (() => {
     });
   }
 
+  // -------------------------------------------- Quantidade e modo de lote
+  // "por peça": cada peça é uma impressão separada — tempo e peso se repetem.
+  // "do lote": as peças saem juntas na mesma mesa — tempo, peso e preparo
+  // informados cobrem todas elas e são divididos entre as peças.
+
+  let modoLote = false;
+
+  function bindModoLote() {
+    el.modoLoteChips.addEventListener("click", (e) => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+      modoLote = chip.dataset.modo === "lote";
+      atualizarModoLoteUI();
+      recalculate();
+    });
+  }
+
+  /** Ajusta rótulos e visibilidade conforme o modo e a quantidade. */
+  function atualizarModoLoteUI() {
+    const qtd = Math.max(1, numVal("quantidadePecas"));
+
+    // Com uma peça só a escolha não muda nada, então nem aparece.
+    el.modoLoteRow.hidden = qtd <= 1;
+
+    el.modoLoteChips.querySelectorAll(".chip").forEach((chip) => {
+      chip.classList.toggle("is-active", (chip.dataset.modo === "lote") === modoLote);
+    });
+
+    el.tempoLabel.textContent = modoLote ? "Tempo de impressão (do lote)" : "Tempo de impressão";
+    el.filamentosSubheading.textContent = modoLote ? "Filamentos (do lote)" : "Filamentos";
+    el.labelTempoTotal.textContent = modoLote ? "Tempo do lote" : "Tempo de impressão";
+    el.labelPesoTotal.textContent = modoLote ? "Filamento do lote" : "Peso de filamento";
+    el.modoLoteHint.textContent = modoLote
+      ? `Filamento, energia, depreciação e preparo divididos entre ${qtd} peças. Embalagem continua por peça.`
+      : "Cada peça é uma impressão separada, com tempo e filamento próprios.";
+  }
+
   // ------------------------------------------------------ Stepper de qtd.
 
   function bindQuantityStepper() {
@@ -498,6 +537,7 @@ const UI = (() => {
       custosExtras: numVal("custosExtras"),
       markupPct: currentMarkupPct(),
       quantidade: numVal("quantidadePecas"),
+      modoLote,
       precoMarketeiro: el.precoMarketeiro.checked,
     };
   }
@@ -520,6 +560,7 @@ const UI = (() => {
 
     el.outQtdLabel.textContent = r.quantidade;
     el.outTotalQtd.textContent = Calculator.formatarMoeda(r.precoTotalQtd);
+    atualizarModoLoteUI();
 
     const pctLucro = r.precoFinal > 0 ? Math.max(0, Math.min(100, (r.lucroFinal / r.precoFinal) * 100)) : 0;
     el.ratioBarFill.style.width = `${pctLucro}%`;
@@ -666,6 +707,8 @@ const UI = (() => {
       atualizarTempoHint();
       syncMarkupUI(100, "init");
       syncTaxaFalhaUI(0, "init");
+      modoLote = false;
+      atualizarModoLoteUI();
       resetMaterialRows();
       showView("calc");
       recalculate();
@@ -726,6 +769,7 @@ const UI = (() => {
     bindMarkupControls();
     bindTaxaFalhaControls();
     bindQuantityStepper();
+    bindModoLote();
     bindBackup();
     bindCopyBudget();
     bindReset();

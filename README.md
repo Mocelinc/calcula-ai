@@ -14,9 +14,7 @@ Descubra quanto realmente custa cada peça — filamento, energia, depreciação
 
 ## 🤖 Sobre o nome
 
-**Calcula.AI** 
-
-O `.AI` não é enfeite: **o projeto inteiro foi construído em parceria com uma IA** — regras de negócio, arquitetura, interface, paletas de cor, correção de bugs e o deploy. A ideia, as decisões de produto e a validação são humanas; a implementação nasceu de uma conversa. O nome é uma piada honesta sobre a própria origem do projeto.
+**Calcula.AI** — e o `.AI` não é enfeite: **o projeto inteiro foi construído em parceria com uma IA**, de regras de negócio e arquitetura a interface, paletas de cor, correção de bugs e deploy. A ideia, as decisões de produto e a validação são humanas; a implementação nasceu de uma conversa. O nome é uma piada honesta sobre a própria origem do projeto.
 
 ---
 
@@ -39,10 +37,12 @@ O Calcula.AI junta tudo isso numa tela só, atualizando o preço enquanto você 
 **Cálculo**
 - Preço atualizado em tempo real, sem botão "calcular"
 - Peças **multi-material**: várias cores/filamentos na mesma peça, cada um com peso e preço/kg próprios
+- Preço do filamento **editável na hora**, só naquele orçamento — testa "e se o rolo custasse R$140?" sem bagunçar o catálogo
 - Tempo de impressão num campo só — aceita `8,30`, `8:30`, `8` ou `90min`, e confirma na tela: *"= 8h 30min"*
 - Markup por slider com **termômetro de margem** (baixa → moderada → saudável → premium)
 - **Preço marketeiro**: arredonda pra finais estratégicos de venda (R$ 43,20 → **R$ 44,90**)
-- Simulador de quantidade e risco de falha embutido no custo
+- **Modo lote**: imprimiu 10 peças na mesma mesa? Cole o tempo e o peso do fatiador e o custo é dividido entre elas, em vez de multiplicado
+- Risco de falha embutido no custo, pra cobrir as peças que vão pro lixo
 
 **Organização**
 - Telas separadas para **Impressoras** e **Filamentos**, com cadastro em lista e salvamento automático
@@ -54,7 +54,8 @@ O Calcula.AI junta tudo isso numa tela só, atualizando o preço enquanto você 
 - Insight automático: *"com esse lucro, 189 peças como essa pagam sua impressora"*
 - **8 paletas de cor**, com seletor visual de amostras:
 
-  🌙 Dracula · Nord · Tokyo Night · Gruvbox · Catppuccin  ☀️ Minimalista · Ocean · Solarized
+  🌙 **Escuras:** Dracula · Nord · Tokyo Night · Gruvbox · Catppuccin
+  ☀️ **Claras:** Minimalista · Ocean · Solarized
 
 ---
 
@@ -71,7 +72,9 @@ Custo final   = Custo base × (1 + risco de falha)
 Preço         = Custo final × (1 + markup)
 ```
 
-> Campos sem informação confirmada começam **zerados** — nada de número inventado inflando seu preço. Vida útil em `0`, por exemplo, simplesmente tira a depreciação da conta até você preencher.
+No **modo lote**, filamento, energia, depreciação e mão de obra são divididos pela quantidade de peças — porque o tempo e o peso informados cobrem a mesa inteira. Embalagem e extras continuam por peça: as peças imprimem juntas, mas cada uma vai no seu saquinho.
+
+> Campos sem informação confirmada começam **zerados** — nada de número inventado inflando seu preço. A única estimativa de partida é a vida útil da máquina (8.000h), por ser necessária pra depreciação existir; se você zerar, a depreciação simplesmente sai da conta.
 
 ---
 

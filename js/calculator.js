@@ -25,6 +25,10 @@ const Calculator = (() => {
    * @param {number} input.custosExtras       Custos extras gerais (R$)
    * @param {number} input.markupPct          Margem de lucro desejada (%)
    * @param {number} input.quantidade         Quantidade de peças do pedido
+   * @param {boolean} input.modoLote          Se true, tempo/peso/preparo informados valem
+   *                                          para o lote inteiro (peças impressas juntas
+   *                                          na mesma mesa) e são divididos entre elas.
+   *                                          Se false, cada peça é uma impressão separada.
    * @param {boolean} input.precoMarketeiro   Se true, arredonda o preço final
    *
    * @returns {Object} Resultado detalhado do orçamento.
@@ -45,8 +49,16 @@ const Calculator = (() => {
       custosExtras = 0,
       markupPct = 0,
       quantidade = 1,
+      modoLote = false,
       precoMarketeiro = false,
     } = input;
+
+    const qtd = Math.max(1, Math.round(quantidade) || 1);
+
+    // No modo lote, o que foi digitado (tempo, peso, preparo) cobre todas as
+    // peças de uma vez, então esses custos são divididos entre elas. Embalagem
+    // e extras continuam por peça — cada uma vai no seu saquinho.
+    const divisor = modoLote ? qtd : 1;
 
     // 1. Tempo total de impressão, em horas decimais.
     const tempoImpressaoH = Math.max(0, tempoHoras) + Math.max(0, tempoMinutos) / 60;
@@ -54,27 +66,29 @@ const Calculator = (() => {
     // 2. Custo de filamento: soma de cada material usado na peça
     //    (peso próprio x preço/kg do respectivo perfil). Suporta peças
     //    multi-material/multi-cor, cada uma com seu próprio custo por kg.
+    //    Os pesos informados são divididos pelo lote quando for o caso.
     const materiaisDetalhe = materiais.map((m) => {
-      const pesoG = Math.max(0, m.pesoG || 0);
+      const pesoG = Math.max(0, m.pesoG || 0) / divisor;
       const precoKg = Math.max(0, m.precoKg || 0);
       return { nome: m.nome || "Material", pesoG, precoKg, custo: (pesoG / 1000) * precoKg };
     });
     const custoFilamento = materiaisDetalhe.reduce((soma, m) => soma + m.custo, 0);
-    const pesoTotalG = materiaisDetalhe.reduce((soma, m) => soma + m.pesoG, 0);
+    const pesoPorPecaG = materiaisDetalhe.reduce((soma, m) => soma + m.pesoG, 0);
+    const pesoTotalG = pesoPorPecaG * divisor; // o peso como foi digitado
 
     // 3. Custo de energia: potência (kW) x tempo de impressão x tarifa.
-    const custoEnergia = (Math.max(0, potenciaW) / 1000) * tempoImpressaoH * Math.max(0, valorKwh);
+    const custoEnergia = ((Math.max(0, potenciaW) / 1000) * tempoImpressaoH * Math.max(0, valorKwh)) / divisor;
 
     // 4. Depreciação da máquina: fração do valor de compra consumida
     //    proporcionalmente ao tempo de impressão desta peça. Se a vida útil
     //    não foi preenchida (0 = "não confirmado"), a depreciação fica em
     //    R$0 em vez de gerar um número distorcido por divisão indevida.
     const custoDepreciacao = vidaUtilHoras > 0
-      ? (Math.max(0, valorCompraMaquina) / vidaUtilHoras) * tempoImpressaoH
+      ? ((Math.max(0, valorCompraMaquina) / vidaUtilHoras) * tempoImpressaoH) / divisor
       : 0;
 
     // 5. Mão de obra: tempo de preparo/pós-processamento convertido em horas.
-    const custoMaoDeObra = (Math.max(0, prepMinutos) / 60) * Math.max(0, valorHoraTrabalho);
+    const custoMaoDeObra = ((Math.max(0, prepMinutos) / 60) * Math.max(0, valorHoraTrabalho)) / divisor;
 
     // 6. Custo base = soma de todos os componentes diretos.
     const custoBase =
@@ -101,15 +115,17 @@ const Calculator = (() => {
     const lucroFinal = precoFinal - custoAjustado;
 
     // 11. Totais pela quantidade de peças do pedido.
-    const qtd = Math.max(1, Math.round(quantidade) || 1);
     const custoTotalQtd = custoAjustado * qtd;
     const precoTotalQtd = precoFinal * qtd;
     const lucroTotalQtd = lucroFinal * qtd;
 
     return {
-      tempoImpressaoH,
-      materiaisDetalhe,
-      pesoTotalG,
+      tempoImpressaoH,     // como foi digitado (do lote, no modo lote)
+      tempoPorPecaH: tempoImpressaoH / divisor,
+      modoLote,
+      materiaisDetalhe,    // já por peça
+      pesoTotalG,          // como foi digitado
+      pesoPorPecaG,
       custoFilamento,
       custoEnergia,
       custoDepreciacao,

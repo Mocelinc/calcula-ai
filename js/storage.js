@@ -18,9 +18,9 @@ const Storage = (() => {
   const DEFAULT_MACHINE_PROFILES = [
     // Consumo médio durante a impressão (~55W) baseado em medições da comunidade
     // Bambu Lab; a potência nominal/máxima da fonte é 150W (só no aquecimento).
-    // Vida útil fica em 0 (não confirmada) até você preencher a sua estimativa —
-    // a depreciação simplesmente não entra no custo enquanto isso.
-    { id: "machine-default-1", nome: "Bambu Lab A1 mini", potenciaW: 55, valorCompra: 2600, vidaUtilHoras: 0 },
+    // Vida útil de 8.000h é uma estimativa de partida — ajuste conforme seu uso.
+    // Se zerar, a depreciação simplesmente sai do cálculo.
+    { id: "machine-default-1", nome: "Bambu Lab A1 mini", potenciaW: 55, valorCompra: 2600, vidaUtilHoras: 8000 },
   ];
 
   // Preços de exemplo (os mesmos usados como referência no briefing do projeto).

@@ -74,7 +74,7 @@
 
             <div class="field-row two-col">
               <div class="field">
-                <label for="tempoImpressao">Tempo de impressão</label>
+                <label for="tempoImpressao" id="tempoLabel">Tempo de impressão</label>
                 <input type="text" id="tempoImpressao" inputmode="decimal" placeholder="ex: 8,30" value="" />
                 <span class="field-hint" id="tempoHint">= 0h 0min</span>
               </div>
@@ -88,7 +88,7 @@
             <hr class="divider" />
 
             <div class="row-between">
-              <p class="subheading">Filamentos</p>
+              <p class="subheading" id="filamentosSubheading">Filamentos</p>
               <span class="peso-total">Total: <strong id="pesoTotalDisplay">0 g</strong></span>
             </div>
             <div class="material-row material-row-head" aria-hidden="true">
@@ -152,6 +152,17 @@
                 </label>
               </div>
             </div>
+
+            <div class="field-row" id="modoLoteRow" hidden>
+              <div class="field">
+                <label>O tempo e o peso que informei são</label>
+                <div class="chip-row" id="modoLoteChips">
+                  <button type="button" class="chip is-active" data-modo="peca">de 1 peça</button>
+                  <button type="button" class="chip" data-modo="lote">do lote inteiro</button>
+                </div>
+                <span class="field-hint" id="modoLoteHint"></span>
+              </div>
+            </div>
           </fieldset>
 
         </form>
@@ -190,11 +201,11 @@
               <span class="mini-stat-value success" id="outLucroUnitario">R$ 0,00</span>
             </div>
             <div class="mini-stat">
-              <span class="mini-stat-label">Tempo total</span>
+              <span class="mini-stat-label" id="labelTempoTotal">Tempo de impressão</span>
               <span class="mini-stat-value" id="outTempoTotal">0h 0min</span>
             </div>
             <div class="mini-stat">
-              <span class="mini-stat-label">Peso de filamento</span>
+              <span class="mini-stat-label" id="labelPesoTotal">Peso de filamento</span>
               <span class="mini-stat-value" id="outPesoTotalStat">0 g</span>
             </div>
           </div>
