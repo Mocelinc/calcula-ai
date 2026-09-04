@@ -55,9 +55,12 @@ const UI = (() => {
 
   // ------------------------------------------------------------ Navegação
 
+  // Delegação: qualquer item de navegação funciona, inclusive os que forem
+  // acrescentados à barra lateral depois da carga inicial.
   function bindNavigation() {
-    document.querySelectorAll(".nav-item").forEach((btn) => {
-      btn.addEventListener("click", () => showView(btn.dataset.view));
+    document.querySelector(".side-nav").addEventListener("click", (e) => {
+      const btn = e.target.closest(".nav-item");
+      if (btn) showView(btn.dataset.view);
     });
   }
 
