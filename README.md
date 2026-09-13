@@ -18,6 +18,19 @@ Descubra quanto realmente custa cada peça — filamento, energia, depreciação
 
 ---
 
+## 🎨 A marca
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/marca/calcula-ai-claro.svg">
+  <img src="docs/marca/calcula-ai-escuro.svg" alt="Calcula.AI" width="340">
+</picture>
+
+Um **C hexagonal** com a boca aberta e um **losango** parado no meio dela — o mesmo ◆ que ficava no cabeçalho, agora guardado dentro da marca e fazendo as vezes do ponto do `.AI`. As letras são desenhadas, não são fonte: só reta, canto cortado a 45 graus e traço de espessura constante.
+
+No site o desenho herda a cor do texto do tema e o losango usa a cor primária, então a marca muda junto com os 8 temas em vez de brigar com eles. Os arquivos estão em [`docs/marca/`](docs/marca/): horizontal, empilhada, símbolo, ícone, favicon e uma versão de traço grosso para gravar em peça impressa.
+
+---
+
 ## 🎯 O problema
 
 Quem imprime em 3D pra vender costuma precificar no chute — normalmente só o peso do filamento. O que fica de fora:
@@ -83,6 +96,7 @@ No **modo lote**, filamento, energia, depreciação e mão de obra são dividido
 ```
 calcula-ai/
 ├── index.html          As quatro telas (calculadora, impressoras, filamentos, ajustes)
+├── favicon.svg         Ícone da aba, na cor da marca
 ├── css/
 │   ├── themes.css      As 8 paletas, cada uma como um conjunto de variáveis CSS
 │   └── style.css       Layout e componentes
@@ -93,7 +107,9 @@ calcula-ai/
 │   ├── chart.js        Gráfico de rosca (Chart.js)
 │   ├── ui.js           Ponte entre DOM e os módulos acima
 │   └── main.js         Ponto de entrada
-└── docs/banner.svg
+└── docs/
+    ├── banner.svg      A capa deste README
+    └── marca/          Os arquivos da marca, em SVG
 ```
 
 Sem build, sem framework, sem `node_modules`. A única dependência externa é o **Chart.js**, via CDN.
