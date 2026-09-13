@@ -18,19 +18,6 @@ Descubra quanto realmente custa cada peça — filamento, energia, depreciação
 
 ---
 
-## 🎨 A marca
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/marca/calcula-ai-claro.svg">
-  <img src="docs/marca/calcula-ai-escuro.svg" alt="Calcula.AI" width="340">
-</picture>
-
-Um **C hexagonal** com a boca aberta e um **losango** parado no meio dela — o mesmo ◆ que ficava no cabeçalho, agora guardado dentro da marca e fazendo as vezes do ponto do `.AI`. As letras são desenhadas, não são fonte: só reta, canto cortado a 45 graus e traço de espessura constante.
-
-No site o desenho herda a cor do texto do tema e o losango usa a cor primária, então a marca muda junto com os 8 temas em vez de brigar com eles. Os arquivos estão em [`docs/marca/`](docs/marca/): horizontal, empilhada, símbolo, ícone, favicon e uma versão de traço grosso para gravar em peça impressa.
-
----
-
 ## 🎯 O problema
 
 Quem imprime em 3D pra vender costuma precificar no chute — normalmente só o peso do filamento. O que fica de fora:
