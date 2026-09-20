@@ -1,0 +1,120 @@
+/* =========================================================================
+   Calcula.AI — css/components.css · Componentes
+   Cards, formularios e botoes — as pecas reusadas
+   por todas as telas.
+   ========================================================================= */
+
+/* Cards                                                                   */
+/* ---------------------------------------------------------------------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  box-shadow: var(--shadow);
+}
+fieldset.card { min-width: 0; }
+
+.card legend, .card h2 {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 0 10px;
+  margin: 0;
+}
+.card h2 { padding-bottom: 12px; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+.row-between { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.subheading { font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin: 0; }
+.peso-total { font-size: 11.5px; color: var(--text-muted); }
+.peso-total strong { color: var(--text); }
+
+/* ---------------------------------------------------------------------- */
+/* Formulário                                                              */
+/* ---------------------------------------------------------------------- */
+.field-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
+.field-row:last-child { margin-bottom: 0; }
+.field-row.two-col { grid-template-columns: 1fr 1fr; }
+.field-row.three-col { grid-template-columns: 1fr 1fr 1fr; }
+
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.grow { flex: 1; }
+.field.field-inline { justify-content: flex-end; }
+
+.field label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-height: 14px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 9px;
+  font-size: 13.5px;
+  width: 100%;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--text);
+  padding: 8px 0;
+}
+.checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
+
+.hint { font-size: 11.5px; color: var(--text-muted); margin: 8px 0 0; }
+.hint-top { margin: -2px 0 8px; }
+
+/* ---------------------------------------------------------------------- */
+/* Botões                                                                  */
+/* ---------------------------------------------------------------------- */
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .08s ease, background-color .15s ease, border-color .15s ease;
+}
+.btn:hover { border-color: var(--primary); }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-secondary { background: var(--surface-alt); }
+.btn-ghost { background: transparent; }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { border-color: var(--danger); }
+.btn-icon { padding: 8px 9px; line-height: 1; }
+.btn-block { width: 100%; padding: 12px; font-size: 13.5px; }
+.btn-block-sm { width: 100%; padding: 8px; font-size: 12px; }
+
+/* ---------------------------------------------------------------------- */
