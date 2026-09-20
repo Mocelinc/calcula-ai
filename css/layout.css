@@ -1,0 +1,184 @@
+/* =========================================================================
+   Calcula.AI — css/layout.css · Layout
+   Barra lateral com a marca e a navegacao, seletor de temas
+   e a area de conteudo onde as quatro telas se revezam.
+   ========================================================================= */
+
+/* Sidebar                                                                 */
+/* ---------------------------------------------------------------------- */
+.sidebar {
+  width: 216px;
+  flex-shrink: 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--bg-alt);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 12px;
+  gap: 20px;
+}
+
+.brand { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 0 6px; }
+.brand-logo { margin: 0; line-height: 0; }
+.brand-logo .marca { display: block; width: 100%; max-width: 172px; height: auto; color: var(--text); }
+.brand-logo .marca .t { fill: currentColor; }
+.brand-logo .marca .d { fill: var(--primary); }
+.brand-sub { margin: 0; font-size: 10.5px; color: var(--text-muted); }
+
+.side-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 11px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.nav-item:hover { background: var(--surface); color: var(--text); }
+.nav-item.is-active { background: var(--primary); color: var(--primary-contrast); }
+.nav-icon { font-size: 15px; }
+
+.sidebar-footer { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---------------------------------------------------------------------- */
+/* Seletor de temas                                                        */
+/* ---------------------------------------------------------------------- */
+.theme-picker { position: relative; }
+
+.theme-picker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .12s ease;
+}
+.theme-picker-trigger:hover,
+.theme-picker-trigger.is-open { border-color: var(--primary); }
+.theme-picker-chevron { margin-left: auto; color: var(--text-muted); font-size: 11px; }
+
+.theme-dots { display: inline-flex; gap: 2px; flex-shrink: 0; }
+.theme-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(128,128,128,0.35);
+}
+
+.theme-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  z-index: 100;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.theme-menu-group {
+  margin: 6px 0 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .1s ease;
+}
+.theme-option:hover { background: var(--surface-alt); }
+.theme-option.is-active { background: var(--surface-alt); color: var(--primary); }
+.theme-option-name { flex: 1; text-align: left; }
+.theme-option-check { opacity: 0; color: var(--primary); font-size: 12px; }
+.theme-option.is-active .theme-option-check { opacity: 1; }
+
+/* ---------------------------------------------------------------------- */
+/* Área de conteúdo / telas                                                */
+/* ---------------------------------------------------------------------- */
+.app-main { flex: 1; min-width: 0; }
+
+.view { padding: 22px 26px 40px; }
+.view[hidden] { display: none !important; }
+
+.view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  max-width: 900px;
+}
+.view-header h2 { margin: 0 0 3px; font-size: 20px; font-weight: 700; }
+.view-header .hint { margin: 0; }
+
+/* Dashboard: entradas à esquerda (largura fixa, são só campos) e os
+   resultados ocupando o resto — que se quebra em duas colunas sozinho
+   quando a tela permite, para caber tudo sem rolagem. */
+.dashboard {
+  display: grid;
+  grid-template-columns: minmax(380px, 450px) minmax(380px, 1fr);
+  gap: 18px;
+  align-items: start;
+  max-width: 1800px;
+}
+
+.panel { min-width: 0; }
+
+.panel-results {
+  position: sticky;
+  top: 22px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 16px;
+  align-items: start;
+  max-height: calc(100vh - 44px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.results-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.panel-controls::-webkit-scrollbar,
+.panel-results::-webkit-scrollbar,
+.theme-menu::-webkit-scrollbar { width: 8px; }
+.panel-controls::-webkit-scrollbar-thumb,
+.panel-results::-webkit-scrollbar-thumb,
+.theme-menu::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+
+/* ---------------------------------------------------------------------- */

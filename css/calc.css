@@ -1,0 +1,288 @@
+/* =========================================================================
+   Calcula.AI — css/calc.css · Tela Calculadora
+   Linhas de filamento, controles de markup
+   com termometro e o painel de resultados.
+   ========================================================================= */
+
+/* Linhas de filamento                                                     */
+/* ---------------------------------------------------------------------- */
+.material-rows { display: flex; flex-direction: column; gap: 7px; margin-bottom: 8px; }
+
+.material-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 84px 32px;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Cabeçalho das colunas — alinhado no mesmo grid das linhas. */
+.material-row-head { padding: 0 2px 3px; }
+.material-row-head span { font-size: 10.5px; font-weight: 600; color: var(--text-muted); }
+
+.material-row select, .material-row input { padding: 7px 8px; font-size: 13px; }
+.material-row-remove { padding: 6px 0; width: 100%; }
+
+/* Preço diferente do cadastrado no catálogo: destaque de "só neste orçamento". */
+.material-row input.is-overridden {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Markup: slider + campo numérico + chips + termômetro                    */
+/* ---------------------------------------------------------------------- */
+.markup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.markup-header label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+
+.markup-value-wrap { display: flex; align-items: center; gap: 4px; }
+.markup-value-wrap input.markup-number {
+  width: 58px;
+  text-align: right;
+  padding: 3px 6px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.markup-value-wrap span { color: var(--text-muted); font-size: 12px; font-weight: 700; }
+.markup-number.warn { color: var(--warning); }
+
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  outline: none;
+  margin: 4px 0 10px;
+  cursor: pointer;
+}
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--primary);
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+input[type="range"].slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"].slider::-moz-range-track { height: 6px; border-radius: 999px; background: var(--border); }
+input[type="range"].slider::-moz-range-thumb {
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--primary);
+  cursor: pointer;
+}
+input[type="range"].slider.slider-warn::-webkit-slider-thumb {
+  background: var(--warning);
+  box-shadow: 0 0 0 1px var(--warning);
+}
+input[type="range"].slider.slider-warn::-moz-range-thumb {
+  background: var(--warning);
+  box-shadow: 0 0 0 1px var(--warning);
+}
+
+.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.chip:hover { border-color: var(--primary); color: var(--text); }
+.chip.is-active { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); }
+
+.markup-thermo { display: flex; align-items: center; gap: 10px; margin-top: 9px; }
+.markup-thermo-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    var(--danger) 0%, var(--danger) 10%,
+    var(--warning) 10%, var(--warning) 26.7%,
+    var(--success) 26.7%, var(--success) 50%,
+    var(--accent) 50%, var(--accent) 100%);
+}
+.markup-thermo-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--text);
+  transform: translate(-50%, -50%);
+  transition: left .1s ease;
+}
+.markup-thermo-label { font-size: 10.5px; font-weight: 700; white-space: nowrap; min-width: 58px; text-align: right; }
+.markup-thermo-label.tier-low { color: var(--danger); }
+.markup-thermo-label.tier-mid { color: var(--warning); }
+.markup-thermo-label.tier-healthy { color: var(--success); }
+.markup-thermo-label.tier-premium { color: var(--accent); }
+
+/* Stepper de quantidade */
+.stepper {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.stepper input[type="number"] {
+  border: none;
+  border-radius: 0;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.stepper input[type="number"]::-webkit-outer-spin-button,
+.stepper input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper-btn {
+  background: var(--surface-alt);
+  border: none;
+  width: 34px;
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+.stepper-btn:hover { background: var(--primary); color: var(--primary-contrast); }
+
+/* ---------------------------------------------------------------------- */
+/* Painel de resultados                                                    */
+/* ---------------------------------------------------------------------- */
+.result-piece-name input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 3px 2px 7px;
+  margin-bottom: 10px;
+}
+.result-piece-name input:focus { box-shadow: none; border-color: var(--primary); }
+
+.price-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  padding: 6px 0 12px;
+}
+.price-hero-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.price-hero-value { font-size: 42px; font-weight: 800; color: var(--primary); letter-spacing: -0.02em; }
+.price-hero-market {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-top: 3px;
+}
+.price-hero-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+.price-hero-sub strong { color: var(--text); font-weight: 700; }
+
+.ratio-bar-wrap { margin: 2px 0 14px; }
+.ratio-bar-track { height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.ratio-bar-fill {
+  height: 100%; width: 0%;
+  background: var(--success);
+  border-radius: 999px;
+  transition: width .15s ease;
+}
+.ratio-bar-label {
+  display: block;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+.price-secondary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+.mini-stat {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-stat-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; }
+.mini-stat-value { font-size: 16px; font-weight: 700; }
+.mini-stat-value.success { color: var(--success); }
+
+.insight-callout {
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Gráfico */
+.chart-wrap { position: relative; height: 210px; margin: 0 auto; max-width: 270px; }
+
+.chart-legend {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px 14px;
+}
+.chart-legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.chart-legend .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.chart-legend .legend-val { margin-left: auto; font-weight: 700; color: var(--text-muted); }
+
+/* Anatomia do custo */
+.breakdown-list { list-style: none; margin: 0; padding: 0; }
+.breakdown-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.breakdown-list li:last-child { border-bottom: none; }
+.breakdown-row { display: flex; justify-content: space-between; gap: 8px; }
+.breakdown-list .label { color: var(--text-muted); }
+.breakdown-list .value { font-weight: 700; flex-shrink: 0; }
+.breakdown-list li.total .label,
+.breakdown-list li.total .value { color: var(--text); font-size: 14px; }
+
+.breakdown-bar {
+  margin-top: 5px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.breakdown-bar-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width .15s ease; }
+
+#copyFeedback { min-height: 15px; text-align: center; color: var(--success); font-weight: 600; }
+
+/* ---------------------------------------------------------------------- */
