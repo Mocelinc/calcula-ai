@@ -84,28 +84,15 @@ No **modo lote**, filamento, energia, depreciação e mão de obra são dividido
 calcula-ai/
 ├── index.html          As quatro telas (calculadora, impressoras, filamentos, ajustes)
 ├── favicon.svg         Ícone da aba, na cor da marca
-├── CLAUDE.md           Mapa do projeto: qual arquivo abrir para cada tarefa
 ├── css/
 │   ├── themes.css      As 8 paletas, cada uma como um conjunto de variáveis CSS
-│   ├── base.css        Reset e corpo da página
-│   ├── layout.css      Barra lateral, marca, seletor de temas e área de conteúdo
-│   ├── components.css  Cards, formulários e botões
-│   ├── calc.css        Tela da calculadora e painel de resultados
-│   ├── lists.css       Telas de impressoras, filamentos e ajustes
-│   └── utils.css       Ajustes finos, carregados por último
+│   └── style.css       Layout e componentes
 ├── js/
 │   ├── calculator.js   Regras de negócio puras (sem DOM) — todas as fórmulas
 │   ├── storage.js      Persistência em localStorage + backup .json
 │   ├── theme.js        Catálogo de temas e seletor visual
 │   ├── chart.js        Gráfico de rosca (Chart.js)
-│   ├── ui/
-│   │   ├── core.js          Cache de elementos, navegação e inicialização
-│   │   ├── calc.js          Entradas da calculadora
-│   │   ├── result.js        Resultados, detalhamento e copiar orçamento
-│   │   ├── material-rows.js Filamentos usados na peça
-│   │   ├── printers.js      Tela Impressoras
-│   │   ├── filaments.js     Tela Filamentos
-│   │   └── settings.js      Tela Ajustes e backup
+│   ├── ui.js           Ponte entre DOM e os módulos acima
 │   └── main.js         Ponto de entrada
 └── docs/
     ├── banner.svg      A capa deste README
