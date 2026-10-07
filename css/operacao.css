@@ -1,0 +1,247 @@
+/* =========================================================================
+   Calcula.AI — css/operacao.css · Telas de operação
+   Tabelas de produtos e vendas, cartões de rolo com barra de estoque,
+   faixas de resumo, selos de situação e as janelas de cadastro.
+   Carregue depois de lists.css e antes de utils.css.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------- */
+/* Faixa de resumo (topo das telas)                                        */
+/* ---------------------------------------------------------------------- */
+.resumo-linha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  max-width: 1200px;
+}
+.resumo-item { background: var(--surface); padding: 11px 14px; display: flex; flex-direction: column; gap: 2px; }
+.resumo-item span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.resumo-item strong { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.resumo-item.atencao strong { color: var(--warning); }
+
+/* ---------------------------------------------------------------------- */
+/* Tabelas                                                                 */
+/* ---------------------------------------------------------------------- */
+.tabela-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; max-width: 1400px; }
+
+.tabela { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
+.tabela th {
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.tabela td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tabela tr:last-child td { border-bottom: none; }
+.tabela tbody tr:hover { background: var(--surface-alt); }
+.tabela .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabela .sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.tabela .acoes { text-align: right; white-space: nowrap; }
+.tabela .acoes .btn { padding: 4px 7px; }
+.tabela .boa { color: var(--success); }
+.tabela .media { color: var(--warning); }
+.tabela .ruim { color: var(--danger); }
+.tabela .linha-pessoal td { opacity: .72; }
+
+.vazio {
+  margin: 14px 0 0;
+  padding: 18px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Selos de situação                                                       */
+/* ---------------------------------------------------------------------- */
+.selo {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+}
+.selo-ok, .selo-pago, .selo-venda { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.selo-baixo, .selo-parcial { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning); }
+.selo-esgotado, .selo-pendente { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+.selo-pessoal { background: color-mix(in srgb, var(--info) 18%, transparent); color: var(--info); }
+
+/* ---------------------------------------------------------------------- */
+/* Cartão de rolo                                                          */
+/* ---------------------------------------------------------------------- */
+.rolo-item .profile-item-head { align-items: center; gap: 9px; }
+
+.barra-estoque {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  overflow: hidden;
+  margin: 10px 0 7px;
+}
+.barra-estoque-fill { height: 100%; border-radius: 999px; transition: width .25s ease; }
+.nivel-ok { background: var(--success); }
+.nivel-baixo { background: var(--warning); }
+.nivel-esgotado { background: var(--danger); }
+
+.rolo-numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 11px;
+}
+.rolo-numeros strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.profile-badge.alerta {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  color: var(--warning);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Filtros                                                                 */
+/* ---------------------------------------------------------------------- */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: flex-end;
+}
+.filtros .field { min-width: 130px; }
+.filtros .field label { font-size: 11px; }
+
+/* ---------------------------------------------------------------------- */
+/* Janelas de cadastro                                                     */
+/* ---------------------------------------------------------------------- */
+.dlg {
+  width: min(520px, calc(100vw - 28px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.dlg::backdrop { background: rgba(0, 0, 0, .55); }
+
+.dlg-form { display: flex; flex-direction: column; gap: 11px; padding: 20px; }
+.dlg-form h3 { margin: 0 0 3px; font-size: 17px; font-weight: 700; }
+.dlg-form .hint { margin: 0; }
+
+.dlg-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 5px;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Navegação: grupos e tela "Mais"                                         */
+/* ---------------------------------------------------------------------- */
+.nav-grupo {
+  margin: 11px 0 3px 11px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+}
+.nav-mais { display: none; }   /* só no celular */
+
+.menu-grande { display: grid; gap: 9px; max-width: 460px; }
+.menu-item {
+  justify-content: flex-start;
+  padding: 15px 16px;
+  font-size: 15px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+}
+.menu-item .nav-icon { font-size: 19px; }
+
+/* ---------------------------------------------------------------------- */
+/* Painel                                                                  */
+/* ---------------------------------------------------------------------- */
+.filtros-painel { margin: 0; }
+.atalhos-periodo { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+
+.painel-destaques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  max-width: 1200px;
+}
+.destaque {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.destaque span { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+.destaque strong { font-size: 23px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.destaque small { font-size: 11.5px; color: var(--text-muted); }
+.destaque-forte { border-color: var(--primary); }
+.destaque .boa { color: var(--success); }
+.destaque .ruim { color: var(--danger); }
+.destaque .atencao { color: var(--warning); }
+
+.painel-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 14px;
+  max-width: 1200px;
+  align-items: start;
+}
+.painel-grade .card h3 { margin: 0 0 11px; font-size: 13px; font-weight: 700; }
+
+/* Conta do período: uma linha por item, somando até o resultado */
+.linha-conta { list-style: none; margin: 0; padding: 0; }
+.linha-conta li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed var(--border);
+}
+.linha-conta li:last-child { border-bottom: none; }
+.linha-conta .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.linha-conta .subtotal { font-weight: 600; }
+.linha-conta .total { font-size: 15px; font-weight: 700; border-top: 1px solid var(--border); border-bottom: none; margin-top: 3px; padding-top: 10px; }
+.linha-conta .nota { color: var(--text-muted); font-size: 12px; border-bottom: none; padding: 3px 0; }
+.linha-conta .boa { color: var(--success); }
+.linha-conta .ruim { color: var(--danger); }
+
+/* Listas com barra proporcional */
+.barras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.barras li { display: flex; flex-direction: column; gap: 4px; }
+.barras .barra-topo { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
+.barras .barra-topo .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.barras .barra { height: 6px; border-radius: 999px; background: var(--bg-alt); overflow: hidden; }
+.barras .barra-fill { height: 100%; background: var(--primary); border-radius: 999px; }
+.barras .barra-fill.negativo { background: var(--danger); }
+.barras small { font-size: 11px; color: var(--text-muted); }
+.barras .nota { color: var(--text-muted); font-size: 12.5px; }

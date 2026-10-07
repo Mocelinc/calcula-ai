@@ -1,8 +1,8 @@
 /* =========================================================================
    Calcula.AI — ui/material-rows.js
    Os filamentos usados na peça, dentro da calculadora. Multi-material:
-   cada linha é um filamento com peso e preço/kg próprios. O preço vem do
-   catálogo (ui/filaments.js) mas pode ser editado só naquele orçamento.
+   cada linha é um rolo com peso e preço/kg próprios. O preço vem do rolo
+   escolhido (ui/rolos.js) mas pode ser editado só naquele orçamento.
    Público: UI.MaterialRows.{ bind, reset, refresh, ler, adicionar }
    ========================================================================= */
 
@@ -16,14 +16,14 @@ UI.MaterialRows = (() => {
    * fica em data-base-preco para sabermos se houve edição manual.
    */
   function adicionar(profileId, pesoG, precoKg) {
-    const base = UI.Filaments.preco(profileId);
+    const base = UI.Rolos.preco(profileId);
     const preco = precoKg === undefined ? base : precoKg;
 
     const row = document.createElement("div");
     row.className = "material-row";
     row.dataset.basePreco = String(base);
     row.innerHTML = `
-      <select class="material-row-select" aria-label="Filamento desta linha">${UI.Filaments.opcoesHtml(profileId)}</select>
+      <select class="material-row-select" aria-label="Filamento desta linha">${UI.Rolos.opcoesHtml(profileId)}</select>
       <input type="number" class="material-row-peso" min="0" step="0.1" value="${pesoG}" aria-label="Peso deste filamento (g)" />
       <input type="number" class="material-row-preco" min="0" step="0.01" value="${preco}" aria-label="Preço por quilo deste filamento" />
       <button type="button" class="btn btn-icon btn-danger material-row-remove" title="Remover filamento">🗑️</button>
@@ -46,7 +46,7 @@ UI.MaterialRows = (() => {
 
   function reset() {
     el.materialRows.innerHTML = "";
-    adicionar(UI.Filaments.primeiroId(), 0);
+    adicionar(UI.Rolos.primeiroId(), 0);
   }
 
   /**
@@ -58,11 +58,11 @@ UI.MaterialRows = (() => {
       const select = rowEl.querySelector(".material-row-select");
       const precoInput = rowEl.querySelector(".material-row-preco");
       const prev = select.value;
-      const id = UI.Filaments.existe(prev) ? prev : UI.Filaments.primeiroId();
-      select.innerHTML = UI.Filaments.opcoesHtml(id);
+      const id = UI.Rolos.existe(prev) ? prev : UI.Rolos.primeiroId();
+      select.innerHTML = UI.Rolos.opcoesHtml(id);
 
       const baseAntiga = parseFloat(rowEl.dataset.basePreco);
-      const baseNova = UI.Filaments.preco(id);
+      const baseNova = UI.Rolos.preco(id);
       const naoEditado = Math.abs(parseFloat(precoInput.value) - baseAntiga) < 0.0001;
       rowEl.dataset.basePreco = String(baseNova);
       if (naoEditado) precoInput.value = baseNova;
@@ -74,7 +74,7 @@ UI.MaterialRows = (() => {
   function ler() {
     return Array.from(el.materialRows.querySelectorAll(".material-row")).map((rowEl) => {
       const select = rowEl.querySelector(".material-row-select");
-      const profile = UI.Filaments.perfil(select.value);
+      const profile = UI.Rolos.rolo(select.value);
       const pesoG = parseFloat(rowEl.querySelector(".material-row-peso").value);
       const precoKg = parseFloat(rowEl.querySelector(".material-row-preco").value);
       return {
@@ -87,7 +87,7 @@ UI.MaterialRows = (() => {
 
   function bind() {
     $("btnAddMaterialRow").addEventListener("click", () => {
-      adicionar(UI.Filaments.primeiroId(), 0);
+      adicionar(UI.Rolos.primeiroId(), 0);
       UI.recalc();
     });
 
@@ -95,7 +95,7 @@ UI.MaterialRows = (() => {
     el.materialRows.addEventListener("change", (e) => {
       if (!e.target.classList.contains("material-row-select")) return;
       const rowEl = e.target.closest(".material-row");
-      const base = UI.Filaments.preco(e.target.value);
+      const base = UI.Rolos.preco(e.target.value);
       rowEl.dataset.basePreco = String(base);
       rowEl.querySelector(".material-row-preco").value = base;
       marcarPrecoEditado(rowEl);

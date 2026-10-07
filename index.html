@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="css/components.css" />
 <link rel="stylesheet" href="css/calc.css" />
 <link rel="stylesheet" href="css/lists.css" />
+<link rel="stylesheet" href="css/operacao.css" />
 <link rel="stylesheet" href="css/utils.css" />
 <link rel="stylesheet" href="css/mobile.css" />
 </head>
@@ -37,17 +38,36 @@
   </div>
 
   <nav class="side-nav" aria-label="Navegação principal">
+    <button type="button" class="nav-item" data-view="painel">
+      <span class="nav-icon">📊</span> Painel
+    </button>
     <button type="button" class="nav-item is-active" data-view="calc">
       <span class="nav-icon">🧮</span> Calculadora
     </button>
-    <button type="button" class="nav-item" data-view="printers">
-      <span class="nav-icon">🖨️</span> Impressoras
+    <button type="button" class="nav-item" data-view="vendas">
+      <span class="nav-icon">🧾</span> Vendas
     </button>
     <button type="button" class="nav-item" data-view="filaments">
-      <span class="nav-icon">🧵</span> Filamentos
+      <span class="nav-icon">🧵</span> Estoque
     </button>
-    <button type="button" class="nav-item" data-view="settings">
+    <button type="button" class="nav-item nav-secundario" data-view="despesas">
+      <span class="nav-icon">💸</span> Despesas
+    </button>
+
+    <span class="nav-grupo">Cadastros</span>
+    <button type="button" class="nav-item nav-secundario" data-view="produtos">
+      <span class="nav-icon">📦</span> Produtos
+    </button>
+    <button type="button" class="nav-item nav-secundario" data-view="printers">
+      <span class="nav-icon">🖨️</span> Impressoras
+    </button>
+    <button type="button" class="nav-item nav-secundario" data-view="settings">
       <span class="nav-icon">⚙️</span> Ajustes
+    </button>
+
+    <!-- No celular as três de cima viram esta, que abre a tela de menu -->
+    <button type="button" class="nav-item nav-mais" data-view="mais">
+      <span class="nav-icon">⋯</span> Mais
     </button>
   </nav>
 
@@ -266,17 +286,222 @@
   </section>
 
   <!-- ---------------------------------------------------------------- -->
-  <!-- TELA: FILAMENTOS                                                 -->
+  <!-- TELA: ESTOQUE DE FILAMENTOS (rolos)                              -->
   <!-- ---------------------------------------------------------------- -->
   <section class="view view-list" id="view-filaments" hidden>
     <header class="view-header">
       <div>
-        <h2>Filamentos</h2>
-        <p class="hint">Seu catálogo de materiais e preços por quilo. As alterações salvam sozinhas.</p>
+        <h2>Estoque de filamentos</h2>
+        <p class="hint">Um cartão por rolo. O peso restante desconta sozinho o que as impressões consumiram.</p>
       </div>
-      <button type="button" id="btnAddMaterial" class="btn btn-primary">＋ Adicionar filamento</button>
+      <button type="button" id="btnAddMaterial" class="btn btn-primary">＋ Adicionar rolo</button>
     </header>
+    <div class="resumo-linha" id="resumoEstoque"></div>
     <div class="profile-list" id="materialList"></div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- TELA: PRODUTOS                                                   -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="view view-list" id="view-produtos" hidden>
+    <header class="view-header">
+      <div>
+        <h2>Produtos</h2>
+        <p class="hint">O que você imprime, com preço de venda e custo médio. O custo vem das impressões registradas.</p>
+      </div>
+      <button type="button" id="btnAddProduto" class="btn btn-primary">＋ Adicionar produto</button>
+    </header>
+    <div class="tabela-wrap">
+      <table class="tabela" id="tabProdutos">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th class="num">Preço de venda</th>
+            <th class="num">Custo médio</th>
+            <th class="num">Margem</th>
+            <th>Ativo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="corpoProdutos"></tbody>
+      </table>
+    </div>
+    <p class="vazio" id="vazioProdutos" hidden>Nenhum produto ainda. Cadastre o primeiro, ou salve um orçamento da calculadora como produto.</p>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- TELA: VENDAS E IMPRESSÕES                                        -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="view view-list" id="view-vendas" hidden>
+    <header class="view-header">
+      <div>
+        <h2>Vendas e impressões</h2>
+        <p class="hint">Cada linha é uma impressão. Venda entra no faturamento; uso pessoal só consome filamento.</p>
+      </div>
+      <button type="button" id="btnAddVenda" class="btn btn-primary">＋ Registrar impressão</button>
+    </header>
+
+    <div class="resumo-linha" id="resumoVendas"></div>
+
+    <div class="filtros" id="filtrosVendas">
+      <label class="field">De
+        <input type="date" id="vendaDe" />
+      </label>
+      <label class="field">Até
+        <input type="date" id="vendaAte" />
+      </label>
+      <label class="field">Tipo
+        <select id="vendaFiltroTipo">
+          <option value="">Todos</option>
+          <option value="venda">Só vendas</option>
+          <option value="pessoal">Só uso pessoal</option>
+        </select>
+      </label>
+      <label class="field">Pagamento
+        <select id="vendaFiltroStatus">
+          <option value="">Todos</option>
+          <option value="pago">Pago</option>
+          <option value="pendente">Pendente</option>
+          <option value="parcial">Parcial</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="tabela-wrap">
+      <table class="tabela" id="tabVendas">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Cliente</th>
+            <th>Produto</th>
+            <th class="num">Qtd</th>
+            <th>Filamento</th>
+            <th class="num">Peso</th>
+            <th class="num">Custo</th>
+            <th class="num">Valor</th>
+            <th class="num">Lucro</th>
+            <th>Pagamento</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="corpoVendas"></tbody>
+      </table>
+    </div>
+    <p class="vazio" id="vazioVendas" hidden>Nenhuma impressão registrada no período.</p>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- TELA: MAIS (só aparece no celular)                               -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="view view-list" id="view-mais" hidden>
+    <header class="view-header">
+      <div>
+        <h2>Mais</h2>
+        <p class="hint">Cadastros e configurações.</p>
+      </div>
+    </header>
+    <div class="menu-grande">
+      <button type="button" class="menu-item nav-item" data-view="despesas"><span class="nav-icon">💸</span> Despesas</button>
+      <button type="button" class="menu-item nav-item" data-view="produtos"><span class="nav-icon">📦</span> Produtos</button>
+      <button type="button" class="menu-item nav-item" data-view="printers"><span class="nav-icon">🖨️</span> Impressoras</button>
+      <button type="button" class="menu-item nav-item" data-view="settings"><span class="nav-icon">⚙️</span> Ajustes</button>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- TELA: DESPESAS                                                   -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="view view-list" id="view-despesas" hidden>
+    <header class="view-header">
+      <div>
+        <h2>Despesas</h2>
+        <p class="hint">Tudo que saiu do caixa: filamento, equipamento, ferramenta, embalagem.</p>
+      </div>
+      <button type="button" id="btnAddDespesa" class="btn btn-primary">＋ Lançar despesa</button>
+    </header>
+
+    <div class="resumo-linha" id="resumoDespesas"></div>
+
+    <div class="filtros">
+      <label class="field">De
+        <input type="date" id="despesaDe" />
+      </label>
+      <label class="field">Até
+        <input type="date" id="despesaAte" />
+      </label>
+      <label class="field">Categoria
+        <select id="despesaFiltroCat"><option value="">Todas</option></select>
+      </label>
+    </div>
+
+    <div class="tabela-wrap">
+      <table class="tabela" id="tabDespesas">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Fornecedor</th>
+            <th class="num">Qtd</th>
+            <th class="num">Valor unit.</th>
+            <th class="num">Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="corpoDespesas"></tbody>
+      </table>
+    </div>
+    <p class="vazio" id="vazioDespesas" hidden>Nenhuma despesa no período.</p>
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- TELA: PAINEL                                                     -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="view" id="view-painel" hidden>
+    <header class="view-header">
+      <div>
+        <h2>Painel</h2>
+        <p class="hint">Como o período fechou: o que entrou, o que saiu e o que sobrou.</p>
+      </div>
+      <div class="filtros filtros-painel">
+        <label class="field">De
+          <input type="date" id="painelDe" />
+        </label>
+        <label class="field">Até
+          <input type="date" id="painelAte" />
+        </label>
+      </div>
+    </header>
+
+    <div class="atalhos-periodo" id="atalhosPeriodo">
+      <button type="button" class="chip" data-periodo="mes">Este mês</button>
+      <button type="button" class="chip" data-periodo="mes-passado">Mês passado</button>
+      <button type="button" class="chip" data-periodo="ano">Este ano</button>
+      <button type="button" class="chip" data-periodo="tudo">Tudo</button>
+    </div>
+
+    <div class="painel-destaques" id="painelDestaques"></div>
+
+    <div class="painel-grade">
+      <div class="card">
+        <h3>Resultado do período</h3>
+        <ul class="linha-conta" id="painelConta"></ul>
+      </div>
+      <div class="card">
+        <h3>Despesas por categoria</h3>
+        <ul class="barras" id="painelCategorias"></ul>
+      </div>
+      <div class="card">
+        <h3>Produtos que mais deram lucro</h3>
+        <ul class="barras" id="painelRanking"></ul>
+      </div>
+      <div class="card">
+        <h3>Estoque que precisa de atenção</h3>
+        <ul class="barras" id="painelEstoque"></ul>
+      </div>
+    </div>
   </section>
 
   <!-- ---------------------------------------------------------------- -->
@@ -340,13 +565,197 @@
 
 </main>
 
+<!-- ======================= JANELAS DE CADASTRO ======================= -->
+
+<dialog class="dlg" id="dlgProduto">
+  <form class="dlg-form" id="formProduto">
+    <h3 id="tituloProduto">Novo produto</h3>
+
+    <div class="field">
+      <label for="prodNome">Nome do produto</label>
+      <input type="text" id="prodNome" required placeholder="ex: Vaso Geométrico" />
+    </div>
+
+    <div class="field-row two-col">
+      <div class="field">
+        <label for="prodCategoria">Categoria</label>
+        <select id="prodCategoria">
+          <option value="venda">Venda</option>
+          <option value="pessoal">Uso pessoal</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="prodPreco">Preço de venda (R$)</label>
+        <input type="number" id="prodPreco" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+
+    <div class="field-row two-col">
+      <div class="field">
+        <label for="prodCusto">Custo médio (R$)</label>
+        <input type="number" id="prodCusto" min="0" step="0.01" value="0" />
+      </div>
+      <div class="field">
+        <label for="prodAtivo">Ativo</label>
+        <select id="prodAtivo">
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="prodObs">Observações</label>
+      <input type="text" id="prodObs" placeholder="ex: 113 g, imprime em 4h" />
+    </div>
+
+    <p class="hint">O custo médio se atualiza sozinho conforme você registra impressões deste produto.</p>
+
+    <div class="dlg-acoes">
+      <button type="button" class="btn btn-ghost" data-fechar>Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar produto</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgVenda">
+  <form class="dlg-form" id="formVenda">
+    <h3 id="tituloVenda">Registrar impressão</h3>
+
+    <div class="field-row two-col">
+      <div class="field">
+        <label for="vendaData">Data</label>
+        <input type="date" id="vendaData" required />
+      </div>
+      <div class="field">
+        <label for="vendaTipo">Tipo</label>
+        <select id="vendaTipo">
+          <option value="venda">Venda</option>
+          <option value="pessoal">Uso pessoal</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row two-col">
+      <div class="field">
+        <label for="vendaProduto">Produto</label>
+        <select id="vendaProduto"></select>
+      </div>
+      <div class="field">
+        <label for="vendaCliente">Cliente</label>
+        <input type="text" id="vendaCliente" placeholder="ex: Marinês" />
+      </div>
+    </div>
+
+    <div class="field-row two-col">
+      <div class="field">
+        <label for="vendaRolo">Filamento usado</label>
+        <select id="vendaRolo"></select>
+      </div>
+      <div class="field">
+        <label for="vendaQtd">Quantidade</label>
+        <input type="number" id="vendaQtd" min="1" step="1" value="1" />
+      </div>
+    </div>
+
+    <div class="field-row three-col">
+      <div class="field">
+        <label for="vendaPeso">Peso por peça (g)</label>
+        <input type="number" id="vendaPeso" min="0" step="0.1" value="0" />
+      </div>
+      <div class="field">
+        <label for="vendaCusto">Custo por peça (R$)</label>
+        <input type="number" id="vendaCusto" min="0" step="0.01" value="0" />
+      </div>
+      <div class="field" id="campoPreco">
+        <label for="vendaPreco">Preço por peça (R$)</label>
+        <input type="number" id="vendaPreco" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+
+    <div class="field" id="campoPagamento">
+      <label for="vendaStatus">Status do pagamento</label>
+      <select id="vendaStatus">
+        <option value="pago">Pago</option>
+        <option value="pendente">Pendente</option>
+        <option value="parcial">Parcial</option>
+      </select>
+    </div>
+
+    <p class="hint" id="previaVenda" aria-live="polite"></p>
+
+    <div class="dlg-acoes">
+      <button type="button" class="btn btn-ghost" data-fechar>Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar registro</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgDespesa">
+  <form class="dlg-form" id="formDespesa">
+    <h3 id="tituloDespesa">Lançar despesa</h3>
+
+    <div class="field-row two-col">
+      <div class="field">
+        <label for="despData">Data</label>
+        <input type="date" id="despData" required />
+      </div>
+      <div class="field">
+        <label for="despCategoria">Categoria</label>
+        <input type="text" id="despCategoria" list="listaCategorias" placeholder="ex: Filamento" />
+        <datalist id="listaCategorias">
+          <option value="Filamento"></option>
+          <option value="Equipamentos"></option>
+          <option value="Ferramentas"></option>
+          <option value="Embalagem"></option>
+          <option value="Energia"></option>
+          <option value="Marketing"></option>
+          <option value="Outros"></option>
+        </datalist>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="despDescricao">Descrição</label>
+      <input type="text" id="despDescricao" required placeholder="ex: PLA Voolt3D Preto" />
+    </div>
+
+    <div class="field-row three-col">
+      <div class="field">
+        <label for="despFornecedor">Fornecedor</label>
+        <input type="text" id="despFornecedor" placeholder="ex: Mercado Livre" />
+      </div>
+      <div class="field">
+        <label for="despQtd">Quantidade</label>
+        <input type="number" id="despQtd" min="1" step="1" value="1" />
+      </div>
+      <div class="field">
+        <label for="despValor">Valor unitário (R$)</label>
+        <input type="number" id="despValor" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+
+    <p class="hint" id="previaDespesa" aria-live="polite"></p>
+
+    <div class="dlg-acoes">
+      <button type="button" class="btn btn-ghost" data-fechar>Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar despesa</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="js/storage.js" defer></script>
 <script src="js/theme.js" defer></script>
 <script src="js/calculator.js" defer></script>
+<script src="js/negocio.js" defer></script>
 <script src="js/chart.js" defer></script>
 <script src="js/ui/core.js" defer></script>
 <script src="js/ui/printers.js" defer></script>
-<script src="js/ui/filaments.js" defer></script>
+<script src="js/ui/rolos.js" defer></script>
+<script src="js/ui/produtos.js" defer></script>
+<script src="js/ui/vendas.js" defer></script>
+<script src="js/ui/despesas.js" defer></script>
+<script src="js/ui/painel.js" defer></script>
 <script src="js/ui/material-rows.js" defer></script>
 <script src="js/ui/calc.js" defer></script>
 <script src="js/ui/result.js" defer></script>

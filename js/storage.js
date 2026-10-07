@@ -12,6 +12,11 @@ const Storage = (() => {
     MATERIAL_PROFILES: PREFIX + "materialProfiles",
     SETTINGS: PREFIX + "settings",
     THEME: PREFIX + "theme",
+    ROLOS: PREFIX + "rolos",
+    PRODUTOS: PREFIX + "produtos",
+    REGISTROS: PREFIX + "registros",
+    DESPESAS: PREFIX + "despesas",
+    NEGOCIO: PREFIX + "negocio",
   };
 
   /** Perfis padrão criados na primeira execução (primeiro uso do app). */
@@ -28,6 +33,12 @@ const Storage = (() => {
     { id: "material-default-1", nome: "PLA Genérico", precoKg: 90 },
     { id: "material-default-2", nome: "PETG Premium", precoKg: 150 },
   ];
+
+  /** Parâmetros do negócio — os mesmos da aba "Configuracoes" da planilha. */
+  const DEFAULT_NEGOCIO = {
+    limiteEstoqueBaixoPct: 20,   // abaixo disso o rolo entra como estoque baixo
+    alertaTerminoDias: 15,       // aviso quando a previsão de término for menor que isso
+  };
 
   const DEFAULT_SETTINGS = {
     // R$/kWh residencial da RGE Sul (distribuidora que atende Frederico
@@ -90,6 +101,51 @@ const Storage = (() => {
   function saveMaterialProfiles(list) {
     return _write(KEYS.MATERIAL_PROFILES, list);
   }
+
+  // ----------------------------------------------------- Listas do negócio
+  // Rolos, produtos, registros de impressão e despesas. Todas seguem o mesmo
+  // formato: uma lista de objetos, cada um com o seu id.
+
+  function _lista(key) { return _read(key, []) || []; }
+
+  /**
+   * Na primeira vez, aproveita o catálogo antigo de filamentos — em que cada
+   * item era só um preço por quilo — e transforma cada um num rolo de 1 kg.
+   * Assim ninguém perde o que já tinha cadastrado.
+   */
+  function getRolos() {
+    const atual = _read(KEYS.ROLOS, null);
+    if (atual) return atual;
+
+    const antigos = _read(KEYS.MATERIAL_PROFILES, null) || DEFAULT_MATERIAL_PROFILES;
+    const convertidos = antigos.map((m) => ({
+      id: m.id || _uid("rolo"),
+      nome: m.nome,
+      material: "PLA",
+      cor: "",
+      marca: "",
+      pesoInicialG: 1000,
+      custoTotal: Number(m.precoKg) || 0,
+      dataCompra: "",
+      fornecedor: "",
+      ativo: true,
+    }));
+    _write(KEYS.ROLOS, convertidos);
+    return convertidos;
+  }
+  function saveRolos(lista) { return _write(KEYS.ROLOS, lista); }
+
+  function getProdutos() { return _lista(KEYS.PRODUTOS); }
+  function saveProdutos(lista) { return _write(KEYS.PRODUTOS, lista); }
+
+  function getRegistros() { return _lista(KEYS.REGISTROS); }
+  function saveRegistros(lista) { return _write(KEYS.REGISTROS, lista); }
+
+  function getDespesas() { return _lista(KEYS.DESPESAS); }
+  function saveDespesas(lista) { return _write(KEYS.DESPESAS, lista); }
+
+  function getNegocio() { return { ...DEFAULT_NEGOCIO, ..._read(KEYS.NEGOCIO, {}) }; }
+  function saveNegocio(partial) { return _write(KEYS.NEGOCIO, { ...getNegocio(), ...partial }); }
 
   // -------------------------------------------------------------- Settings
 
@@ -172,6 +228,16 @@ const Storage = (() => {
     saveMachineProfiles,
     getMaterialProfiles,
     saveMaterialProfiles,
+    getRolos,
+    saveRolos,
+    getProdutos,
+    saveProdutos,
+    getRegistros,
+    saveRegistros,
+    getDespesas,
+    saveDespesas,
+    getNegocio,
+    saveNegocio,
     getSettings,
     saveSettings,
     getTheme,

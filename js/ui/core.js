@@ -5,7 +5,9 @@
 
    Os módulos de ui/ pendurados aqui:
      UI.Printers      ui/printers.js       tela Impressoras
-     UI.Filaments     ui/filaments.js      tela Filamentos
+     UI.Rolos         ui/rolos.js          tela Estoque (rolos de filamento)
+     UI.Produtos      ui/produtos.js       tela Produtos
+     UI.Vendas        ui/vendas.js         tela Vendas e impressões
      UI.MaterialRows  ui/material-rows.js  filamentos usados na peça
      UI.Calc          ui/calc.js           entradas da calculadora
      UI.Result        ui/result.js         recálculo, detalhamento e orçamento
@@ -63,12 +65,12 @@ const UI = (() => {
 
   // ------------------------------------------------------------ Navegação
 
-  // Delegação: qualquer item de navegação funciona, inclusive os que forem
-  // acrescentados à barra lateral depois da carga inicial.
+  // Delegação no documento inteiro: vale para a barra lateral, para as abas
+  // do celular e para os atalhos da tela "Mais".
   function bindNavigation() {
-    document.querySelector(".side-nav").addEventListener("click", (e) => {
+    document.addEventListener("click", (e) => {
       const btn = e.target.closest(".nav-item");
-      if (btn) showView(btn.dataset.view);
+      if (btn && btn.dataset.view) showView(btn.dataset.view);
     });
   }
 
@@ -76,7 +78,7 @@ const UI = (() => {
     document.querySelectorAll(".view").forEach((view) => {
       view.hidden = view.id !== `view-${viewName}`;
     });
-    document.querySelectorAll(".nav-item").forEach((btn) => {
+    document.querySelectorAll(".side-nav .nav-item").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.view === viewName);
     });
     window.scrollTo({ top: 0 });
@@ -114,7 +116,11 @@ const UI = (() => {
     cacheElements();
 
     UI.Printers.load();
-    UI.Filaments.load();
+    UI.Rolos.load();
+    UI.Produtos.load();
+    UI.Vendas.load();
+    UI.Despesas.load();
+    UI.Painel.load();
     UI.MaterialRows.reset();
     UI.Settings.applySaved();
     UI.Calc.start();
@@ -122,7 +128,11 @@ const UI = (() => {
     bindNavigation();
     UI.Calc.bind();
     UI.Printers.bind();
-    UI.Filaments.bind();
+    UI.Rolos.bind();
+    UI.Produtos.bind();
+    UI.Vendas.bind();
+    UI.Despesas.bind();
+    UI.Painel.bind();
     UI.MaterialRows.bind();
     UI.Result.bind();
     UI.Settings.bind();

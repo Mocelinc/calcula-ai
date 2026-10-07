@@ -7,7 +7,7 @@
    a versao guardada mesmo depois de voce publicar mudancas.
    ========================================================================= */
 
-const VERSAO = "calcula-ai-v1";
+const VERSAO = "calcula-ai-v2";
 
 const ARQUIVOS = [
   "./",
@@ -20,15 +20,21 @@ const ARQUIVOS = [
   "./css/components.css",
   "./css/calc.css",
   "./css/lists.css",
+  "./css/operacao.css",
   "./css/utils.css",
   "./css/mobile.css",
   "./js/storage.js",
   "./js/theme.js",
   "./js/calculator.js",
+  "./js/negocio.js",
   "./js/chart.js",
   "./js/ui/core.js",
   "./js/ui/printers.js",
-  "./js/ui/filaments.js",
+  "./js/ui/rolos.js",
+  "./js/ui/produtos.js",
+  "./js/ui/vendas.js",
+  "./js/ui/despesas.js",
+  "./js/ui/painel.js",
   "./js/ui/material-rows.js",
   "./js/ui/calc.js",
   "./js/ui/result.js",

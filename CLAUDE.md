@@ -11,6 +11,7 @@ Abra só o arquivo da linha correspondente — cada um é autossuficiente.
 | Se a tarefa é sobre | Abra |
 | --- | --- |
 | Fórmula de custo, preço, lote, formatação de moeda | `js/calculator.js` (puro, sem DOM) |
+| Estoque de rolo, lucro da venda, indicadores do painel | `js/negocio.js` (puro, sem DOM) |
 | Salvar, ler, exportar e importar dados | `js/storage.js` |
 | Catálogo de temas e troca de tema | `js/theme.js` + `css/themes.css` |
 | Gráfico de rosca da composição do custo | `js/chart.js` |
@@ -19,13 +20,19 @@ Abra só o arquivo da linha correspondente — cada um é autossuficiente.
 | Painel de resultados, detalhamento, copiar orçamento | `js/ui/result.js` |
 | Filamentos usados na peça (linhas multi-material) | `js/ui/material-rows.js` |
 | Tela Impressoras | `js/ui/printers.js` |
-| Tela Filamentos | `js/ui/filaments.js` |
+| Tela Estoque (rolos de filamento) | `js/ui/rolos.js` |
+| Tela Produtos | `js/ui/produtos.js` |
+| Tela Vendas e impressões | `js/ui/vendas.js` |
+| Tela Despesas | `js/ui/despesas.js` |
+| Tela Painel (fechamento do período) | `js/ui/painel.js` |
 | Tela Ajustes e backup `.json` | `js/ui/settings.js` |
-| Marcação das quatro telas | `index.html` |
+| Marcação de todas as telas e as janelas de cadastro | `index.html` |
 | Barra lateral, marca e área de conteúdo | `css/layout.css` |
 | Cards, formulários e botões | `css/components.css` |
 | Visual da calculadora e do painel de resultados | `css/calc.css` |
 | Visual das telas de lista e de ajustes | `css/lists.css` |
+| Tabelas, selos, barras de estoque, janelas e painel | `css/operacao.css` |
+| Tudo que muda no celular | `css/mobile.css` |
 
 ## Regras da casa
 

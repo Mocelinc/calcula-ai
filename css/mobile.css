@@ -124,6 +124,28 @@
   .profile-fields.two-col,
   .profile-fields.three-col { grid-template-columns: 1fr; }
   .settings-grid { grid-template-columns: 1fr; }
+
+  /* ------------------------------------------------ Telas de operação */
+  /* Na barra de abas cabem quatro. Os cadastros vão para a tela "Mais". */
+  .nav-grupo,
+  .nav-secundario { display: none; }
+  .nav-mais { display: flex; }
+
+  .resumo-linha { grid-template-columns: 1fr 1fr; }
+  .resumo-item strong { font-size: 15px; }
+
+  .filtros { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filtros .field { min-width: 0; }
+
+  /* A tabela rola de lado dentro da moldura, sem empurrar a página */
+  .tabela { font-size: 12px; }
+  .tabela th, .tabela td { padding: 8px 9px; }
+
+  /* Janela de cadastro ocupa a tela toda, como app */
+  .dlg { width: 100vw; max-width: 100vw; max-height: 92vh; margin: auto auto 0; border-radius: 14px 14px 0 0; }
+  .dlg-form { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  .dlg-acoes { flex-direction: column-reverse; }
+  .dlg-acoes .btn { width: 100%; }
 }
 
 /* Telas bem estreitas: a marca encolhe e os espacos apertam um pouco */
