@@ -145,6 +145,23 @@
 .dlg-form h3 { margin: 0 0 3px; font-size: 17px; font-weight: 700; }
 .dlg-form .hint { margin: 0; }
 
+/* Linhas de filamento dentro da janela de venda */
+.venda-filamentos { display: flex; flex-direction: column; gap: 7px; margin-bottom: 7px; }
+.venda-filamento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px auto;
+  gap: 7px;
+  align-items: center;
+}
+.hint-inline {
+  margin-left: 7px;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .check {
   display: flex;
   align-items: center;
@@ -247,6 +264,16 @@
 .linha-conta .nota { color: var(--text-muted); font-size: 12px; border-bottom: none; padding: 3px 0; }
 .linha-conta .boa { color: var(--success); }
 .linha-conta .ruim { color: var(--danger); }
+.linha-conta small { color: var(--text-muted); font-weight: 400; margin: 0 5px; }
+.linha-conta .variacao { font-size: 11px; font-weight: 700; }
+.linha-conta .variacao.boa { color: var(--success); }
+.linha-conta .variacao.ruim { color: var(--danger); }
+
+/* O resumo mensal ocupa a largura toda da grade do painel */
+.card-largo { grid-column: 1 / -1; }
+.card-largo .tabela-wrap { border: none; }
+.card-largo .tabela { background: transparent; }
+.card-largo .tabela th { background: transparent; }
 
 /* Listas com barra proporcional */
 .barras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }

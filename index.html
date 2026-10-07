@@ -491,6 +491,21 @@
         <ul class="linha-conta" id="painelConta"></ul>
       </div>
       <div class="card">
+        <h3>Comparativo com o período anterior</h3>
+        <ul class="linha-conta" id="painelComparativo"></ul>
+        <p class="hint">Em despesas, variação para cima significa que você gastou mais.</p>
+      </div>
+      <div class="card">
+        <h3>Conferência de custo das vendas</h3>
+        <ul class="linha-conta" id="painelConferencia"></ul>
+        <p class="hint">Compara o custo que a calculadora informou com o filamento que realmente saiu do estoque.</p>
+      </div>
+      <div class="card">
+        <h3>Uso pessoal e testes</h3>
+        <ul class="linha-conta" id="painelPessoal"></ul>
+        <p class="hint">Não entra no faturamento nem no resultado. O rolo já foi lançado como despesa na compra.</p>
+      </div>
+      <div class="card">
         <h3>Despesas por categoria</h3>
         <ul class="barras" id="painelCategorias"></ul>
       </div>
@@ -501,6 +516,24 @@
       <div class="card">
         <h3>Estoque que precisa de atenção</h3>
         <ul class="barras" id="painelEstoque"></ul>
+      </div>
+      <div class="card card-largo">
+        <h3>Resumo mensal</h3>
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Mês</th>
+                <th class="num">Receitas</th>
+                <th class="num">Custo das peças</th>
+                <th class="num">Despesas</th>
+                <th class="num">Resultado</th>
+                <th class="num">Filamento</th>
+              </tr>
+            </thead>
+            <tbody id="painelMensal"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </section>
@@ -517,6 +550,21 @@
     </header>
 
     <div class="settings-grid">
+      <fieldset class="card">
+        <legend>🧵 Estoque</legend>
+        <div class="field-row two-col">
+          <div class="field">
+            <label for="limiteEstoqueBaixo">Estoque baixo abaixo de (%)</label>
+            <input type="number" id="limiteEstoqueBaixo" min="1" max="90" step="1" value="20" />
+          </div>
+          <div class="field">
+            <label for="alertaTermino">Avisar quando faltar (dias)</label>
+            <input type="number" id="alertaTermino" min="1" max="120" step="1" value="15" />
+          </div>
+        </div>
+        <p class="hint">Define quando o rolo aparece como "estoque baixo" e quando o aviso de término aparece no cartão e no painel.</p>
+      </fieldset>
+
       <fieldset class="card">
         <legend>⚡ Energia</legend>
         <div class="field-row">
@@ -648,21 +696,16 @@
       </div>
     </div>
 
-    <div class="field-row two-col">
-      <div class="field">
-        <label for="vendaRolo">Filamento usado</label>
-        <select id="vendaRolo"></select>
-      </div>
-      <div class="field">
-        <label for="vendaQtd">Quantidade</label>
-        <input type="number" id="vendaQtd" min="1" step="1" value="1" />
-      </div>
+    <div class="field">
+      <label>Filamentos usados <span class="hint-inline">peso por peça, em gramas</span></label>
+      <div class="venda-filamentos" id="vendaFilamentos"></div>
+      <button type="button" class="btn btn-ghost btn-block-sm" id="btnAddFilamentoVenda">＋ Adicionar filamento</button>
     </div>
 
     <div class="field-row three-col">
       <div class="field">
-        <label for="vendaPeso">Peso por peça (g)</label>
-        <input type="number" id="vendaPeso" min="0" step="0.1" value="0" />
+        <label for="vendaQtd">Quantidade de peças</label>
+        <input type="number" id="vendaQtd" min="1" step="1" value="1" />
       </div>
       <div class="field">
         <label for="vendaCusto">Custo por peça (R$)</label>

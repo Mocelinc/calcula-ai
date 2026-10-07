@@ -14,6 +14,10 @@ UI.Settings = (() => {
     el.valorKwh.value = s.valorKwh;
     el.valorHora.value = s.valorHora;
 
+    const n = Storage.getNegocio();
+    $("limiteEstoqueBaixo").value = n.limiteEstoqueBaixoPct;
+    $("alertaTermino").value = n.alertaTerminoDias;
+
     // Migração: versões antigas guardavam markup como "50"/"100"/"custom".
     let markupVal = parseFloat(s.markup);
     if (!Number.isFinite(markupVal)) markupVal = parseFloat(s.markupCustom);
@@ -22,6 +26,18 @@ UI.Settings = (() => {
   }
 
   function bind() {
+    // Parâmetros de estoque: redesenham as telas que dependem deles.
+    ["limiteEstoqueBaixo", "alertaTermino"].forEach((id) => {
+      $(id).addEventListener("change", () => {
+        Storage.saveNegocio({
+          limiteEstoqueBaixoPct: Math.max(1, Math.min(90, parseFloat($("limiteEstoqueBaixo").value) || 20)),
+          alertaTerminoDias: Math.max(1, Math.min(120, parseFloat($("alertaTermino").value) || 15)),
+        });
+        UI.Rolos.atualizar();
+        UI.Painel.atualizar();
+      });
+    });
+
     $("btnExport").addEventListener("click", () => {
       Storage.downloadExport();
       UI.flash("Backup exportado.");

@@ -50,9 +50,99 @@ UI.Painel = (() => {
 
     destaques(ind);
     conta(ind);
+    comparativo(registros, despesas, rolos);
+    conferencia(ind);
+    pessoal(ind);
     categorias(despesas);
     ranking(registros, rolos);
     estoque(rolos);
+    mensal(registros, despesas, rolos);
+  }
+
+  /** Uma linha "rótulo à esquerda, número à direita". */
+  function preencherLinhas(alvo, itens) {
+    $(alvo).innerHTML = itens.map(([rotulo, valor, classe = "", cor = ""]) => `
+      <li class="${classe}">
+        <span>${rotulo}</span>
+        <span class="num ${cor}">${valor}</span>
+      </li>`).join("");
+  }
+
+  /** Período anterior de mesma duração, como na planilha. */
+  function comparativo(registros, despesas, rolos) {
+    const c = Negocio.comparativo(registros, despesas, rolos, de(), ate());
+    if (!c.anterior) {
+      $("painelComparativo").innerHTML = '<li class="nota">Escolha um período com data inicial e final para comparar.</li>';
+      return;
+    }
+    const seta = (v, gastoEhRuim) => {
+      if (v === null) return '<span class="variacao">—</span>';
+      const sobe = v >= 0;
+      const bom = gastoEhRuim ? !sobe : sobe;
+      return `<span class="variacao ${bom ? "boa" : "ruim"}">${sobe ? "▲" : "▼"} ${Math.abs(v).toFixed(0)}%</span>`;
+    };
+    const item = (rotulo, chave, gastoEhRuim = false) => [
+      rotulo,
+      `${moeda(c.atual[chave])} <small>antes ${moeda(c.anterior[chave])}</small> ${seta(c.variacao[chave], gastoEhRuim)}`,
+    ];
+    preencherLinhas("painelComparativo", [
+      item("Faturamento", "faturamento"),
+      item("Despesas", "totalDespesas", true),
+      item("Lucro das vendas", "lucroVendas"),
+      item("Resultado líquido", "resultadoLiquido"),
+    ]);
+  }
+
+  /** O custo informado pela calculadora contra o material que saiu mesmo. */
+  function conferencia(ind) {
+    const c = ind.conferencia;
+    if (c.custoInformado <= 0) {
+      $("painelConferencia").innerHTML = '<li class="nota">Nenhuma venda registrada no período.</li>';
+      return;
+    }
+    preencherLinhas("painelConferencia", [
+      ["Custo informado na calculadora", moeda(c.custoInformado)],
+      ["Custo real do material", moeda(c.custoMaterialReal)],
+      ["Material como % do custo", `${c.pctMaterial.toFixed(0)}%`],
+      ["Outros custos embutidos", moeda(c.outrosCustos), "total", c.outrosCustos < 0 ? "ruim" : ""],
+    ]);
+  }
+
+  function pessoal(ind) {
+    const p = ind.pessoal;
+    if (!p.pecas) {
+      $("painelPessoal").innerHTML = '<li class="nota">Nenhuma impressão de uso pessoal no período.</li>';
+      return;
+    }
+    preencherLinhas("painelPessoal", [
+      ["Peças impressas para uso próprio", String(p.pecas)],
+      ["Filamento consumido", `${p.pesoG.toFixed(0)} g`],
+      ["Valor gasto em filamento", moeda(p.custoMaterial)],
+      ["Custo total estimado das peças", moeda(p.custoTotal)],
+      ["Do filamento do período", `${p.pctDoFilamento.toFixed(0)}%`, "nota"],
+    ]);
+  }
+
+  function mensal(registros, despesas, rolos) {
+    const meses = Negocio.resumoMensal(registros, despesas, rolos, de(), ate());
+    const corpo = $("painelMensal");
+    if (!meses.length) {
+      corpo.innerHTML = '<tr><td colspan="6" class="nota">Nada lançado no período.</td></tr>';
+      return;
+    }
+    const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+    corpo.innerHTML = meses.map((m) => {
+      const [ano, mes] = m.mes.split("-");
+      return `
+        <tr>
+          <td>${MES[Number(mes) - 1]}/${ano.slice(2)}</td>
+          <td class="num">${moeda(m.receitas)}</td>
+          <td class="num">${moeda(m.custoPecas)}</td>
+          <td class="num">${moeda(m.despesas)}</td>
+          <td class="num ${m.resultado < 0 ? "ruim" : "boa"}"><strong>${moeda(m.resultado)}</strong></td>
+          <td class="num">${(m.filamentoG / 1000).toFixed(2)} kg</td>
+        </tr>`;
+    }).join("");
   }
 
   function destaques(ind) {
@@ -94,7 +184,10 @@ UI.Painel = (() => {
         <span class="num ${valor < 0 ? "ruim" : classe === "total" || classe === "subtotal" ? "boa" : ""}">${moeda(valor)}</span>
       </li>`).join("") + `
       <li class="nota"><span>Margem média das vendas</span><span class="num">${ind.margemMedia.toFixed(0)}%</span></li>
-      <li class="nota"><span>Filamento consumido</span><span class="num">${((ind.pesoVendido + ind.pesoPessoal) / 1000).toFixed(2)} kg</span></li>`;
+      <li class="nota"><span>Peças vendidas</span><span class="num">${ind.pecasVendidas} em ${ind.vendas} venda${ind.vendas === 1 ? "" : "s"}</span></li>
+      <li class="nota"><span>Ticket médio por venda</span><span class="num">${moeda(ind.ticketMedio)}</span></li>
+      <li class="nota"><span>Já recebido</span><span class="num">${moeda(ind.recebido)}</span></li>
+      <li class="nota"><span>Filamento consumido</span><span class="num">${(ind.pesoTotal / 1000).toFixed(2)} kg</span></li>`;
   }
 
   /** Lista com barra proporcional — serve para categorias e ranking. */

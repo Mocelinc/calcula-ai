@@ -74,6 +74,15 @@ const UI = (() => {
     });
   }
 
+  /** Cada tela se redesenha ao aparecer — assim nenhuma mostra dado velho. */
+  const AO_ABRIR = {
+    painel: () => UI.Painel.atualizar(),
+    vendas: () => UI.Vendas.atualizar(),
+    despesas: () => UI.Despesas.atualizar(),
+    produtos: () => UI.Produtos.atualizar(),
+    filaments: () => UI.Rolos.atualizar(),
+  };
+
   function showView(viewName) {
     document.querySelectorAll(".view").forEach((view) => {
       view.hidden = view.id !== `view-${viewName}`;
@@ -81,6 +90,7 @@ const UI = (() => {
     document.querySelectorAll(".side-nav .nav-item").forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.view === viewName);
     });
+    if (AO_ABRIR[viewName]) AO_ABRIR[viewName]();
     window.scrollTo({ top: 0 });
   }
 

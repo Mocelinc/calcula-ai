@@ -74,6 +74,11 @@ UI.Rolos = (() => {
             <input type="date" class="pf-data" value="${escapeHtml(p.dataCompra || "")}" />
           </label>
         </div>
+        <div class="profile-fields">
+          <label>Fornecedor
+            <input type="text" class="pf-fornecedor" value="${escapeHtml(p.fornecedor || "")}" placeholder="ex: Mercado Livre" />
+          </label>
+        </div>
         ${aviso}
       </div>`;
     }).join("");
@@ -144,6 +149,7 @@ UI.Rolos = (() => {
       if (e.target.classList.contains("pf-peso")) p.pesoInicialG = Math.max(0, parseFloat(v) || 0);
       if (e.target.classList.contains("pf-custo")) p.custoTotal = Math.max(0, parseFloat(v) || 0);
       if (e.target.classList.contains("pf-data")) p.dataCompra = v;
+      if (e.target.classList.contains("pf-fornecedor")) p.fornecedor = v;
 
       Storage.saveRolos(rolos);
       renderResumo();

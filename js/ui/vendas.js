@@ -48,11 +48,18 @@ UI.Vendas = (() => {
     const linhas = filtrados();
     $("vazioVendas").hidden = linhas.length > 0;
 
+    const rolos = UI.Rolos.lista();
     corpo.innerHTML = linhas.map((reg) => {
-      const rolo = UI.Rolos.rolo(reg.roloId);
       const prod = UI.Produtos.produto(reg.produtoId);
-      const t = Negocio.totaisDoRegistro(reg, rolo);
+      const t = Negocio.totaisDoRegistro(reg, rolos);
       const venda = reg.tipo === "venda";
+      const fils = t.filamentos.map((f) => {
+        const r = UI.Rolos.rolo(f.roloId);
+        return r ? r.nome : "—";
+      });
+      const filamentoTexto = fils.length > 1
+        ? `<span title="${escapeHtml(fils.join(", "))}">${fils.length} filamentos</span>`
+        : escapeHtml(fils[0] || "—");
       return `
         <tr data-id="${reg.id}" class="${venda ? "" : "linha-pessoal"}">
           <td>${formatarData(reg.data)}</td>
@@ -60,7 +67,7 @@ UI.Vendas = (() => {
           <td>${escapeHtml(reg.cliente || "—")}</td>
           <td>${escapeHtml(prod ? prod.nome : reg.produtoNome || "—")}</td>
           <td class="num">${t.qtd}</td>
-          <td>${escapeHtml(rolo ? rolo.nome : "—")}</td>
+          <td>${filamentoTexto}</td>
           <td class="num">${t.pesoTotalG.toFixed(0)} g</td>
           <td class="num">${moeda(t.custoTotal)}</td>
           <td class="num">${venda ? moeda(t.valorTotal) : "—"}</td>
@@ -100,23 +107,53 @@ UI.Vendas = (() => {
   function atualizarListas() {
     if (!$("vendaProduto")) return;
     const prodAtual = $("vendaProduto").value;
-    const roloAtual = $("vendaRolo").value;
     $("vendaProduto").innerHTML = '<option value="">— sem produto —</option>' + UI.Produtos.opcoesHtml(prodAtual);
-    $("vendaRolo").innerHTML = UI.Rolos.opcoesHtml(roloAtual);
+    // As linhas de filamento acompanham mudanças no estoque sem perder a escolha.
+    $("vendaFilamentos").querySelectorAll(".vf-rolo").forEach((sel) => {
+      const atual = sel.value;
+      sel.innerHTML = UI.Rolos.opcoesHtml(UI.Rolos.existe(atual) ? atual : UI.Rolos.primeiroId());
+    });
     render();
+  }
+
+  // ------------------------------------------- Linhas de filamento da peça
+  // Uma impressão pode usar mais de um rolo — peça de duas cores, troca de
+  // filamento no meio. Cada linha é um rolo com o peso que ele entrou.
+
+  function linhaFilamento(roloId, pesoG) {
+    const div = document.createElement("div");
+    div.className = "venda-filamento";
+    div.innerHTML = `
+      <select class="vf-rolo" aria-label="Rolo usado">${UI.Rolos.opcoesHtml(roloId)}</select>
+      <input type="number" class="vf-peso" min="0" step="0.1" value="${pesoG}" aria-label="Peso por peça (g)" />
+      <button type="button" class="btn btn-icon btn-danger vf-remover" title="Remover filamento">🗑️</button>`;
+    $("vendaFilamentos").appendChild(div);
+  }
+
+  function montarFilamentos(reg) {
+    $("vendaFilamentos").innerHTML = "";
+    const fils = reg ? Negocio.filamentosDe(reg) : [];
+    if (!fils.length) linhaFilamento(UI.Rolos.primeiroId(), 0);
+    else fils.forEach((f) => linhaFilamento(f.roloId, f.pesoUnitG));
+  }
+
+  function lerFilamentos() {
+    return [...$("vendaFilamentos").querySelectorAll(".venda-filamento")].map((l) => ({
+      roloId: l.querySelector(".vf-rolo").value,
+      pesoUnitG: Math.max(0, parseFloat(l.querySelector(".vf-peso").value) || 0),
+    })).filter((f) => f.roloId);
   }
 
   function abrir(reg) {
     editando = reg || null;
     $("tituloVenda").textContent = reg ? "Editar registro" : "Registrar impressão";
     $("vendaProduto").innerHTML = '<option value="">— sem produto —</option>' + UI.Produtos.opcoesHtml(reg ? reg.produtoId : "");
-    $("vendaRolo").innerHTML = UI.Rolos.opcoesHtml(reg ? reg.roloId : UI.Rolos.primeiroId());
+    montarFilamentos(reg);
 
     $("vendaData").value = reg ? reg.data : new Date().toISOString().slice(0, 10);
     $("vendaTipo").value = reg ? reg.tipo : "venda";
     $("vendaCliente").value = reg ? (reg.cliente || "") : "";
     $("vendaQtd").value = reg ? reg.qtd : 1;
-    $("vendaPeso").value = reg ? reg.pesoUnitG : 0;
     $("vendaCusto").value = reg ? reg.custoUnit : 0;
     $("vendaPreco").value = reg ? reg.precoUnit : 0;
     $("vendaStatus").value = reg ? (reg.statusPagamento || "pago") : "pago";
@@ -150,20 +187,34 @@ UI.Vendas = (() => {
 
   /** Mostra, antes de salvar, o que aquele registro vai significar. */
   function previa() {
-    const rolo = UI.Rolos.rolo($("vendaRolo").value);
     const reg = lerFormulario();
-    const t = Negocio.totaisDoRegistro(reg, rolo);
-    const partes = [`${t.pesoTotalG.toFixed(0)} g de filamento`, `custo ${moeda(t.custoTotal)}`];
+    const rolos = UI.Rolos.lista();
+    const t = Negocio.totaisDoRegistro(reg, rolos);
+    const partes = [`${t.pesoTotalG.toFixed(0)} g de filamento`,
+                    `material ${moeda(t.custoMaterialTotal)}`,
+                    `custo ${moeda(t.custoTotal)}`];
     if (reg.tipo === "venda") {
       partes.push(`valor ${moeda(t.valorTotal)}`);
       partes.push(`lucro ${moeda(t.lucro)} (${t.margem.toFixed(0)}%)`);
     }
-    if (rolo) {
+
+    // Quanto sobra em cada rolo depois deste registro. Se estiver editando,
+    // devolve antes o que o registro antigo já tinha consumido.
+    const sobras = reg.filamentos.map((f) => {
+      const rolo = UI.Rolos.rolo(f.roloId);
+      if (!rolo) return null;
       const e = UI.Rolos.estado(rolo);
-      const sobra = e.restante - t.pesoTotalG + (editando && editando.roloId === rolo.id ? editando.pesoUnitG * Math.max(1, editando.qtd) : 0);
-      partes.push(`sobram ${Math.max(0, sobra).toFixed(0)} g no rolo`);
-    }
-    $("previaVenda").textContent = partes.join(" · ");
+      let devolver = 0;
+      if (editando) {
+        devolver = Negocio.filamentosDe(editando)
+          .filter((x) => x.roloId === f.roloId)
+          .reduce((s, x) => s + x.pesoUnitG * Math.max(1, editando.qtd), 0);
+      }
+      const sobra = e.restante + devolver - f.pesoUnitG * reg.qtd;
+      return `${rolo.nome}: ${Math.max(0, sobra).toFixed(0)} g`;
+    }).filter(Boolean);
+
+    $("previaVenda").textContent = partes.join(" · ") + (sobras.length ? ` — sobra ${sobras.join(", ")}` : "");
   }
 
   function lerFormulario() {
@@ -172,9 +223,8 @@ UI.Vendas = (() => {
       tipo: $("vendaTipo").value,
       cliente: $("vendaCliente").value.trim(),
       produtoId: $("vendaProduto").value,
-      roloId: $("vendaRolo").value,
+      filamentos: lerFilamentos(),
       qtd: Math.max(1, parseInt($("vendaQtd").value, 10) || 1),
-      pesoUnitG: Math.max(0, parseFloat($("vendaPeso").value) || 0),
       custoUnit: Math.max(0, parseFloat($("vendaCusto").value) || 0),
       precoUnit: Math.max(0, parseFloat($("vendaPreco").value) || 0),
       statusPagamento: $("vendaStatus").value,
@@ -204,6 +254,7 @@ UI.Vendas = (() => {
     render();
     UI.Rolos.atualizar();      // o consumo mudou: o estoque precisa redesenhar
     UI.Produtos.atualizar();   // e o custo médio do produto também
+    UI.Painel.atualizar();     // e o fechamento do período
     UI.flash("Registro salvo.");
   }
 
@@ -214,8 +265,25 @@ UI.Vendas = (() => {
     $("formVenda").addEventListener("submit", salvar);
     $("vendaTipo").addEventListener("change", () => { aplicarTipo(); previa(); });
 
-    ["vendaProduto", "vendaRolo", "vendaQtd", "vendaPeso", "vendaCusto", "vendaPreco"].forEach((id) => {
+    ["vendaProduto", "vendaQtd", "vendaCusto", "vendaPreco"].forEach((id) => {
       $(id).addEventListener("input", previa);
+    });
+
+    // Linhas de filamento: adicionar, remover e recalcular a prévia.
+    $("btnAddFilamentoVenda").addEventListener("click", () => {
+      linhaFilamento(UI.Rolos.primeiroId(), 0);
+      previa();
+    });
+    $("vendaFilamentos").addEventListener("input", previa);
+    $("vendaFilamentos").addEventListener("change", previa);
+    $("vendaFilamentos").addEventListener("click", (e) => {
+      if (!e.target.closest(".vf-remover")) return;
+      if ($("vendaFilamentos").querySelectorAll(".venda-filamento").length <= 1) {
+        alert("A impressão precisa ter ao menos um filamento.");
+        return;
+      }
+      e.target.closest(".venda-filamento").remove();
+      previa();
     });
 
     // Escolher o produto traz o que já se sabe dele: custo de produção,
@@ -227,7 +295,11 @@ UI.Vendas = (() => {
 
       const custo = UI.Produtos.custoMedio(p);
       if (custo) $("vendaCusto").value = custo.toFixed(2);
-      if (p.pesoG) $("vendaPeso").value = p.pesoG.toFixed(1);
+      // Peso do produto entra na primeira linha de filamento, se ela estiver zerada.
+      const primeiroPeso = $("vendaFilamentos").querySelector(".vf-peso");
+      if (p.pesoG && primeiroPeso && !parseFloat(primeiroPeso.value)) {
+        primeiroPeso.value = p.pesoG.toFixed(1);
+      }
 
       if (p.precoPadrao) $("vendaPreco").value = p.precoPadrao;
       else if (p.precoSugerido) {
@@ -257,6 +329,7 @@ UI.Vendas = (() => {
         render();
         UI.Rolos.atualizar();
         UI.Produtos.atualizar();
+        UI.Painel.atualizar();
       }
     });
 
