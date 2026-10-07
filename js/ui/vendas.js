@@ -131,6 +131,21 @@ UI.Vendas = (() => {
     const venda = $("vendaTipo").value === "venda";
     $("campoPreco").hidden = !venda;
     $("campoPagamento").hidden = !venda;
+    aplicarGuardarPreco();
+  }
+
+  /**
+   * A oferta de guardar o preço só faz sentido quando é venda e o produto
+   * escolhido ainda não tem preço cadastrado — que é o caso de quem salvou
+   * o produto pela calculadora, com custo mas sem preço.
+   */
+  function aplicarGuardarPreco() {
+    const campo = $("campoGuardarPreco");
+    if (!campo) return;
+    const p = UI.Produtos.produto($("vendaProduto").value);
+    const cabe = $("vendaTipo").value === "venda" && p && !p.precoPadrao;
+    campo.hidden = !cabe;
+    if (cabe) $("vendaGuardarPreco").checked = true;
   }
 
   /** Mostra, antes de salvar, o que aquele registro vai significar. */
@@ -176,6 +191,14 @@ UI.Vendas = (() => {
     else registros.push({ id: Storage.uid("reg"), ...dados });
 
     Storage.saveRegistros(registros);
+
+    // O preço definido aqui pode virar o preço padrão do produto, para a
+    // próxima venda já vir preenchida.
+    if (prod && dados.tipo === "venda" && dados.precoUnit > 0 &&
+        !$("campoGuardarPreco").hidden && $("vendaGuardarPreco").checked) {
+      UI.Produtos.definirPreco(prod.id, dados.precoUnit);
+    }
+
     $("dlgVenda").close();
     editando = null;
     render();
@@ -195,13 +218,23 @@ UI.Vendas = (() => {
       $(id).addEventListener("input", previa);
     });
 
-    // Escolher o produto já traz o preço e o custo cadastrados nele.
+    // Escolher o produto traz o que já se sabe dele: custo de produção,
+    // peso por peça e, se existir, o preço de venda cadastrado.
     $("vendaProduto").addEventListener("change", () => {
       const p = UI.Produtos.produto($("vendaProduto").value);
+      aplicarGuardarPreco();
       if (!p) return;
-      if (p.precoPadrao) $("vendaPreco").value = p.precoPadrao;
+
       const custo = UI.Produtos.custoMedio(p);
       if (custo) $("vendaCusto").value = custo.toFixed(2);
+      if (p.pesoG) $("vendaPeso").value = p.pesoG.toFixed(1);
+
+      if (p.precoPadrao) $("vendaPreco").value = p.precoPadrao;
+      else if (p.precoSugerido) {
+        // Sem preço definido: entra a sugestão da calculadora, para você
+        // confirmar ou trocar antes de salvar.
+        $("vendaPreco").value = p.precoSugerido.toFixed(2);
+      }
       previa();
     });
 

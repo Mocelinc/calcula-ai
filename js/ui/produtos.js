@@ -46,7 +46,11 @@ UI.Produtos = (() => {
             ${p.obs ? `<span class="sub">${escapeHtml(p.obs)}</span>` : ""}
           </td>
           <td><span class="selo selo-${p.categoria === "venda" ? "venda" : "pessoal"}">${p.categoria === "venda" ? "Venda" : "Uso pessoal"}</span></td>
-          <td class="num">${preco > 0 ? Calculator.formatarMoeda(preco) : "—"}</td>
+          <td class="num">${preco > 0
+            ? Calculator.formatarMoeda(preco)
+            : p.precoSugerido
+              ? `<span class="sugerido">a definir<span class="sub">sugestão ${Calculator.formatarMoeda(p.precoSugerido)}</span></span>`
+              : "a definir"}</td>
           <td class="num">${custo > 0 ? Calculator.formatarMoeda(custo) : "—"}</td>
           <td class="num ${classeMargem}">${preco > 0 ? margem.toFixed(0) + "%" : "—"}</td>
           <td>${p.ativo === false ? "Não" : "Sim"}</td>
@@ -72,7 +76,12 @@ UI.Produtos = (() => {
     $("tituloProduto").textContent = p ? "Editar produto" : "Novo produto";
     $("prodNome").value = p ? p.nome : "";
     $("prodCategoria").value = p ? (p.categoria || "venda") : "venda";
-    $("prodPreco").value = p ? (p.precoPadrao || 0) : 0;
+    // Campo vazio quer dizer "preço ainda a definir" — a sugestão da
+    // calculadora fica só como dica dentro do campo.
+    $("prodPreco").value = p && p.precoPadrao ? p.precoPadrao : "";
+    $("prodPreco").placeholder = p && p.precoSugerido
+      ? `a definir — sugestão ${p.precoSugerido.toFixed(2)}`
+      : "a definir";
     $("prodCusto").value = p ? (p.custoMedio || 0) : 0;
     $("prodAtivo").value = p && p.ativo === false ? "nao" : "sim";
     $("prodObs").value = p ? (p.obs || "") : "";
@@ -101,21 +110,37 @@ UI.Produtos = (() => {
     editando = null;
   }
 
-  /** Atalho da calculadora: transforma o orçamento atual num produto. */
-  function salvarDaCalculadora(nome, precoSugerido, custoUnitario) {
-    produtos.push({
+  /**
+   * Atalho da calculadora: o orçamento vira produto já com o custo de
+   * produção. O preço de venda fica em branco de propósito — ele é decidido
+   * na hora de vender, e o valor sugerido fica guardado só como referência.
+   */
+  function salvarDaCalculadora({ nome, custoUnitario, pesoG, precoSugerido }) {
+    const novo = {
       id: Storage.uid("prod"),
       nome: nome || "Peça sem nome",
       categoria: "venda",
-      precoPadrao: Math.max(0, precoSugerido || 0),
+      precoPadrao: 0,
+      precoSugerido: Math.max(0, precoSugerido || 0),
       custoMedio: Math.max(0, custoUnitario || 0),
+      pesoG: Math.max(0, pesoG || 0),
       ativo: true,
       obs: "",
-    });
+    };
+    produtos.push(novo);
     Storage.saveProdutos(produtos);
     render();
     UI.Vendas.atualizarListas();
-    UI.flash("Produto cadastrado a partir do orçamento.");
+    return novo;
+  }
+
+  /** Usado quando o preço é definido na venda e você manda guardar. */
+  function definirPreco(id, preco) {
+    const p = produto(id);
+    if (!p) return;
+    p.precoPadrao = Math.max(0, preco || 0);
+    Storage.saveProdutos(produtos);
+    render();
   }
 
   // --------------------------------------------------------------- Eventos
@@ -148,5 +173,5 @@ UI.Produtos = (() => {
 
   function atualizar() { render(); }
 
-  return { load, bind, lista, produto, opcoesHtml, salvarDaCalculadora, atualizar, custoMedio };
+  return { load, bind, lista, produto, opcoesHtml, salvarDaCalculadora, definirPreco, atualizar, custoMedio };
 })();

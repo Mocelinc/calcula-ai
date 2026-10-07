@@ -101,9 +101,37 @@ UI.Result = (() => {
     el.breakdownList.innerHTML = html;
   }
 
+  // -------------------------------------------------- Salvar como produto
+
+  /**
+   * Leva o orçamento para o cadastro de produtos com o custo de produção
+   * já calculado. O preço de venda não vai junto: ele é decidido na hora
+   * de vender, e o valor sugerido aqui fica guardado só como referência.
+   */
+  function salvarComoProduto() {
+    if (!lastResult) return;
+    const nome = el.pieceName.value.trim();
+    if (!nome) {
+      el.pieceName.focus();
+      UI.flash("Dê um nome para a peça antes de salvar.");
+      return;
+    }
+    const r = lastResult;
+
+    UI.Produtos.salvarDaCalculadora({
+      nome,
+      custoUnitario: r.custoAjustado,   // já é por peça, com risco de falha
+      pesoG: r.pesoPorPecaG,            // por peça, mesmo no modo lote
+      precoSugerido: r.precoFinal,
+    });
+    UI.flash(`"${nome}" salvo com custo de ${Calculator.formatarMoeda(r.custoAjustado)}. O preço você define na venda.`);
+  }
+
   // ------------------------------------------------------ Copiar orçamento
 
   function bind() {
+    $("btnSalvarProduto").addEventListener("click", salvarComoProduto);
+
     $("btnCopyBudget").addEventListener("click", async () => {
       if (!lastResult) return;
       const texto = buildBudgetText(lastResult);

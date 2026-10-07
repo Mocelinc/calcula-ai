@@ -145,6 +145,19 @@
 .dlg-form h3 { margin: 0 0 3px; font-size: 17px; font-weight: 700; }
 .dlg-form .hint { margin: 0; }
 
+.check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.check input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+.sugerido { color: var(--text-muted); }
+.sugerido .sub { color: var(--text-muted); opacity: .8; }
+
 .dlg-acoes {
   display: flex;
   justify-content: flex-end;

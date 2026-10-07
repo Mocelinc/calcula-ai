@@ -262,6 +262,7 @@
 
           <div class="card actions-card">
             <button type="button" id="btnCopyBudget" class="btn btn-primary btn-block">📋 Copiar orçamento</button>
+            <button type="button" id="btnSalvarProduto" class="btn btn-ghost btn-block">📦 Salvar como produto</button>
             <p class="hint" id="copyFeedback" aria-live="polite"></p>
           </div>
         </div>
@@ -672,6 +673,11 @@
         <input type="number" id="vendaPreco" min="0" step="0.01" value="0" />
       </div>
     </div>
+
+    <label class="check" id="campoGuardarPreco" hidden>
+      <input type="checkbox" id="vendaGuardarPreco" checked />
+      <span>Guardar este preço no cadastro do produto</span>
+    </label>
 
     <div class="field" id="campoPagamento">
       <label for="vendaStatus">Status do pagamento</label>
