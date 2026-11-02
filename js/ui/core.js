@@ -105,6 +105,21 @@ const UI = (() => {
   /** Porta de entrada única para "recalcule tudo". */
   function recalc() { UI.Result.recalcular(); }
 
+  /**
+   * Relê tudo do zero. Usado quando a sincronização traz dados novos do
+   * servidor — o outro aparelho mexeu em algo enquanto este estava aberto.
+   */
+  function recarregarDados() {
+    UI.Printers.load();
+    UI.Rolos.load();
+    UI.Produtos.load();
+    UI.Vendas.load();
+    UI.Despesas.load();
+    UI.Painel.atualizar();
+    UI.MaterialRows.refresh();
+    recalc();
+  }
+
   // ------------------------------------------------------- Inicialização
 
   /**
@@ -150,8 +165,10 @@ const UI = (() => {
 
     document.addEventListener("calculaai:themechange", () => CostChart.refreshColors());
 
+    UI.Settings.mostrarSync();
     recalc();
   }
 
-  return { el, $, numVal, escapeHtml, formatGramas, formatTempo, showView, flash, recalc, init };
+  return { el, $, numVal, escapeHtml, formatGramas, formatTempo, showView, flash,
+           recalc, recarregarDados, init };
 })();

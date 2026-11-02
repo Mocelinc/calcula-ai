@@ -17,6 +17,21 @@ const Storage = (() => {
     REGISTROS: PREFIX + "registros",
     DESPESAS: PREFIX + "despesas",
     NEGOCIO: PREFIX + "negocio",
+    SYNC: PREFIX + "sync",
+  };
+
+  /**
+   * Quais chaves viajam para o servidor, e com que nome lá. O resto
+   * (tema, marcas de sincronização) é de cada aparelho e fica aqui.
+   */
+  const COLECOES = {
+    [PREFIX + "rolos"]: "rolos",
+    [PREFIX + "produtos"]: "produtos",
+    [PREFIX + "registros"]: "registros",
+    [PREFIX + "despesas"]: "despesas",
+    [PREFIX + "negocio"]: "negocio",
+    [PREFIX + "machineProfiles"]: "impressoras",
+    [PREFIX + "settings"]: "ajustes",
   };
 
   /** Perfis padrão criados na primeira execução (primeiro uso do app). */
@@ -63,6 +78,12 @@ const Storage = (() => {
   function _write(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      // Gravou algo que o servidor também guarda? Marca a hora e manda.
+      const colecao = COLECOES[key];
+      if (colecao) {
+        _marcar(colecao, Date.now());
+        _agendarEnvio(colecao);
+      }
       return true;
     } catch (err) {
       console.error(`Calcula.AI: falha ao gravar "${key}" no localStorage`, err);
@@ -100,6 +121,116 @@ const Storage = (() => {
 
   function saveMaterialProfiles(list) {
     return _write(KEYS.MATERIAL_PROFILES, list);
+  }
+
+  /* =======================================================================
+     Sincronização com o servidor de casa
+     -----------------------------------------------------------------------
+     O app continua guardando tudo no navegador — é o que o deixa rápido e
+     funcionando sem internet. Quando o servidor está ao alcance, cada
+     coleção também sobe para lá, com a hora da última alteração, e quem
+     tiver a versão mais nova vence. Sem servidor, nada quebra: o aparelho
+     trabalha sozinho e manda quando ele voltar.
+
+     Como são dezenas de registros, cada coleção viaja inteira. Sincronizar
+     item a item seria mais código para resolver um problema que não existe
+     nesta escala.
+     ======================================================================= */
+
+  const API = "api";
+  const CHAVE_DE = Object.fromEntries(Object.entries(COLECOES).map(([k, n]) => [n, k]));
+
+  let servidorOk = false;
+  let ultimaSync = 0;
+  const pendentes = new Set();
+  let timerEnvio = null;
+
+  function _marcas() { return _read(KEYS.SYNC, {}) || {}; }
+  function _marca(nome) { return _marcas()[nome] || 0; }
+  function _marcar(nome, quando) {
+    const m = _marcas();
+    m[nome] = quando;
+    try { localStorage.setItem(KEYS.SYNC, JSON.stringify(m)); } catch (err) { /* sem espaço: segue sem marca */ }
+  }
+
+  async function _api(caminho, opcoes = {}, ms = 5000) {
+    const ctrl = new AbortController();
+    const corta = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(`${API}/${caminho}`, { ...opcoes, signal: ctrl.signal, cache: "no-store" });
+    } finally {
+      clearTimeout(corta);
+    }
+  }
+
+  async function _enviar(nome) {
+    const chave = CHAVE_DE[nome];
+    const bruto = localStorage.getItem(chave);
+    if (bruto === null) return;
+    const r = await _api(`colecao/${nome}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dados: JSON.parse(bruto), atualizadoEm: _marca(nome) || Date.now() }),
+    });
+    if (!r.ok) throw new Error(`servidor recusou ${nome}`);
+  }
+
+  /** Junta as gravações de um segundo e manda de uma vez só. */
+  function _agendarEnvio(nome) {
+    pendentes.add(nome);
+    clearTimeout(timerEnvio);
+    timerEnvio = setTimeout(async () => {
+      if (!servidorOk) return;
+      for (const colecao of [...pendentes]) {
+        try { await _enviar(colecao); pendentes.delete(colecao); }
+        catch (err) { servidorOk = false; }   // tenta de novo na próxima rodada
+      }
+      if (!pendentes.size) ultimaSync = Date.now();
+    }, 1200);
+  }
+
+  /**
+   * Conversa completa com o servidor: traz o que lá está mais novo, manda
+   * o que aqui está mais novo.
+   * @returns {Promise<{servidor:boolean, trouxe:string[]}>}
+   */
+  async function sincronizar() {
+    let remoto;
+    try {
+      const r = await _api("estado");
+      if (!r.ok) throw new Error("sem servidor");
+      remoto = await r.json();
+      servidorOk = true;
+    } catch (err) {
+      servidorOk = false;
+      return { servidor: false, trouxe: [] };
+    }
+
+    const trouxe = [];
+    for (const [chave, nome] of Object.entries(COLECOES)) {
+      const aqui = _marca(nome);
+      const la = remoto[nome];
+      try {
+        if (!la) {
+          if (localStorage.getItem(chave) !== null) await _enviar(nome);
+        } else if (la.atualizadoEm > aqui) {
+          localStorage.setItem(chave, JSON.stringify(la.dados));
+          _marcar(nome, la.atualizadoEm);
+          trouxe.push(nome);
+        } else if (aqui > la.atualizadoEm) {
+          await _enviar(nome);
+        }
+      } catch (err) {
+        servidorOk = false;
+      }
+    }
+    if (servidorOk) ultimaSync = Date.now();
+    return { servidor: servidorOk, trouxe };
+  }
+
+  /** Para a tela de Ajustes mostrar em que pé está. */
+  function estadoSync() {
+    return { servidor: servidorOk, ultimaSync, pendentes: pendentes.size };
   }
 
   // ----------------------------------------------------- Listas do negócio
@@ -244,5 +375,7 @@ const Storage = (() => {
     saveTheme,
     downloadExport,
     importAll,
+    sincronizar,
+    estadoSync,
   };
 })();

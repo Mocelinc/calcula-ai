@@ -25,7 +25,39 @@ UI.Settings = (() => {
     UI.Calc.syncMarkup(markupVal, "init");
   }
 
+  /** Mostra, em português claro, em que pé está a conversa com o servidor. */
+  function mostrarSync() {
+    const alvo = $("estadoSync");
+    if (!alvo) return;
+    const e = Storage.estadoSync();
+    if (!e.servidor) {
+      alvo.className = "estado-sync off";
+      alvo.textContent = "Só neste aparelho — servidor fora de alcance. O que você lançar fica guardado aqui e sobe quando ele voltar.";
+      return;
+    }
+    const hora = e.ultimaSync ? new Date(e.ultimaSync).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "agora";
+    alvo.className = "estado-sync on";
+    alvo.textContent = e.pendentes
+      ? `Conectado ao servidor. ${e.pendentes} alteração(ões) esperando para subir.`
+      : `Sincronizado com o servidor às ${hora}.`;
+  }
+
   function bind() {
+    $("btnSincronizar").addEventListener("click", async () => {
+      $("btnSincronizar").disabled = true;
+      const r = await Storage.sincronizar();
+      if (r.trouxe.length) {
+        UI.recarregarDados();
+        UI.flash(`Trouxe do servidor: ${r.trouxe.join(", ")}.`);
+      } else if (r.servidor) {
+        UI.flash("Tudo igual nos dois lados.");
+      } else {
+        UI.flash("Servidor fora de alcance.");
+      }
+      mostrarSync();
+      $("btnSincronizar").disabled = false;
+    });
+
     // Parâmetros de estoque: redesenham as telas que dependem deles.
     ["limiteEstoqueBaixo", "alertaTermino"].forEach((id) => {
       $(id).addEventListener("change", () => {
@@ -63,5 +95,5 @@ UI.Settings = (() => {
     });
   }
 
-  return { bind, applySaved };
+  return { bind, applySaved, mostrarSync };
 })();

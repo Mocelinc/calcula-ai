@@ -1,14 +1,26 @@
 /* =========================================================================
    Calcula.AI — main.js
-   Ponto de entrada da aplicação. Inicializa tema e UI assim que o DOM
-   e os demais scripts (carregados com "defer") estiverem prontos.
+   Ponto de entrada. Antes de desenhar a tela, tenta trazer os dados do
+   servidor de casa; sem ele, segue com o que está guardado no aparelho.
    ========================================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   ThemeManager.init();
+
+  // Uma conversa rápida com o servidor antes de montar a tela evita o
+  // efeito de ver os dados antigos e eles trocarem na sua frente.
+  await Storage.sincronizar();
+
   UI.init();
   corDaBarraDoCelular();
   document.addEventListener("calculaai:themechange", corDaBarraDoCelular);
+
+  // De minuto em minuto, confere se o outro aparelho mexeu em algo.
+  setInterval(async () => {
+    const r = await Storage.sincronizar();
+    if (r.trouxe.length) UI.recarregarDados();
+    if (typeof UI.Settings.mostrarSync === "function") UI.Settings.mostrarSync();
+  }, 60000);
 });
 
 /* A barra de status do celular acompanha o fundo do tema escolhido. */

@@ -1,0 +1,11 @@
+# Calcula.AI — serve o site e manda /api para a API que roda no proprio
+# notebook, fora do container. Mesmo endereco para os dois, entao o
+# navegador nao precisa lidar com origem diferente.
+:80 {
+	root * /usr/share/caddy
+	handle /api/* {
+		reverse_proxy 172.17.0.1:8001
+	}
+	file_server
+	encode gzip
+}

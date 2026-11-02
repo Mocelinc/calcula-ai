@@ -162,6 +162,20 @@
   letter-spacing: 0;
 }
 
+/* Estado da sincronização, na tela de Ajustes */
+.estado-sync {
+  margin: 0 0 11px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border-left: 3px solid var(--border);
+}
+.estado-sync.on { border-left-color: var(--success); color: var(--text); }
+.estado-sync.off { border-left-color: var(--warning); }
+
 .check {
   display: flex;
   align-items: center;

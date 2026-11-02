@@ -1,0 +1,15 @@
+[Unit]
+Description=Calcula.AI - API de dados
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/calcula-ai/site/servidor/api
+ExecStart=/opt/calcula-ai/api/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
